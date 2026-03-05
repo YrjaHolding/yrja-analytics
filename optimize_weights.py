@@ -294,12 +294,13 @@ def _evaluate_anchor(
     # The range established by fixed products
     min_fixed = min(fixed_values) if fixed_values else anchor_value
     max_dev = anchor_value - min_fixed  # worst-case deviation among fixed
+    midpoint = (min_fixed + anchor_value) / 2
 
-    # ── Phase 2: free products (target min_fixed_value, cap at anchor) ────
+    # ── Phase 2: free products (target midpoint of fixed range) ───────────
     for p in products:
         if not p.adjustable_size:
             continue
-        tw, val, dev = _free_weight_for_target(p, min_fixed, anchor_value)
+        tw, val, dev = _free_weight_for_target(p, midpoint, anchor_value)
         n, unit_w = _suggest_unit_breakdown(tw)
         slots[p.name] = SlotResult(
             name=p.name,
