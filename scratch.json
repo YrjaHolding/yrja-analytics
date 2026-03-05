@@ -1,0 +1,3632 @@
+{
+    "object": "list",
+    "results": [
+        {
+            "object": "page",
+            "id": "00285895-c292-422e-8dfe-9d7af4a00235",
+            "created_time": "2026-02-20T13: 24: 00.000Z",
+            "last_edited_time": "2026-02-26T08: 22: 00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.4
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 300
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 120
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kjøttdeig",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kjøttdeig",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https: //www.notion.so/Kj-ttdeig-00285895c292422e8dfe9d7af4a00235",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "0772dbe9-7e46-4c0e-9a00-1975ba374dc3",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:33:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 1.9
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10157/972d7926-8232-44f6-b0cb-39a953297a2a.JPG.666x500_q85_crop-%2C0_fillwhite_upscale.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 198.37
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 419
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Hel kylling",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Hel kylling",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Hel-kylling-0772dbe97e464c0e9a001975ba374dc3",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "08ae8757-23a2-4eee-8e38-ed0342bdfe53",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 185
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 500
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Sikfilet",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Sikfilet",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Sikfilet-08ae875723a24eee8e38ed0342bdfe53",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "1549fcc5-e566-4046-bda2-edc8da5d05dd",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://stolsvidda.com/media/catalog/product/cache/7a3236aaef95070a37b3ec2c1a9c2683/y/t/ytrefillet_2nd.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 293
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Ytrefilet",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Ytrefilet",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Ytrefilet-1549fcc5e5664046bda2edc8da5d05dd",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "16f4a77c-3e7e-4544-ae5b-bdc92d4ac75f",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 170
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 1000
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Pulled pork",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Pulled pork",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Pulled-pork-16f4a77c3e7e4544ae5bbdc92d4ac75f",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "2d265b7f-08b0-474c-afdc-15aac49f6869",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-24T13:20:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://stolsvidda.com/media/catalog/product/cache/7a3236aaef95070a37b3ec2c1a9c2683/s/k/skinkesteik_2nd.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 195
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stek",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stek",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Stek-2d265b7f08b0474cafdc15aac49f6869",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "311b4d1b-8dbf-8003-b531-d930b1e28fc4",
+            "created_time": "2026-02-24T13:21:00.000Z",
+            "last_edited_time": "2026-02-25T12:21:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.3
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 228
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 55
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kjøttdeig",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kjøttdeig",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kj-ttdeig-311b4d1b8dbf8003b531d930b1e28fc4",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "311b4d1b-8dbf-8053-922d-f8f405fa0659",
+            "created_time": "2026-02-24T09:43:00.000Z",
+            "last_edited_time": "2026-02-24T13:18:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.34
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kvarøy",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kvarøy",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://www.fourstarseafood.com/cdn/shop/files/Retail-Kvaroy-Salmon-Fillets3_600x.webp?v=1764346258"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 532
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 181
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Laks",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Laks",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Laks-311b4d1b8dbf8053922df8f405fa0659",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "333f65b4-e72b-455b-a4df-1e012f3f0c0e",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.3
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 360
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 600
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Pancetta",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Pancetta",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Pancetta-333f65b4e72b455ba4df1e012f3f0c0e",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "33675a09-8bd8-458d-94f8-61773636497e",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:34:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.55
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10173/72b76f53-9506-4af1-9b45-92920299a1e0.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 438
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 219
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kyllinglår, filet",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kyllinglår, filet",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kyllingl-r-filet-33675a098bd8458d94f861773636497e",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "40e54368-fe5d-47b2-8b6c-7e43a9cb2b85",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-26T08:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.95
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 309
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 369
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Grytekjøtt",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Grytekjøtt",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Grytekj-tt-40e54368fe5d47b28b6c7e43a9cb2b85",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "5019247c-970c-4f3a-b750-aaf35de7522b",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-26T08:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.6
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 727
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 579
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Entrecôte",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Entrecôte",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Entrec-te-5019247c970c4f3ab750aaf35de7522b",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "681f02ad-8e04-4f40-96f6-6e9ac974ecea",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://stolsvidda.com/media/catalog/product/cache/7a3236aaef95070a37b3ec2c1a9c2683/b/a/bacon_av_sideflesk_2nd.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 346
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Bacon",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Bacon",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Bacon-681f02ad8e044f4096f66e9ac974ecea",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "717e72f3-016f-4e16-953e-4ad75888a818",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 230
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 1000
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Svine side",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Svine side",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Svine-side-717e72f3016f4e16953e4ad75888a818",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "73f9bd6f-3c14-45f7-bbf7-4f1985696753",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:34:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.29
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10145/2c984a42-69c8-46e8-a371-a56a8664bc10.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 468
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 141
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kyllingbryst",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kyllingbryst",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kyllingbryst-73f9bd6f3c1445f7bbf74f1985696753",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "7c4ed676-18fa-49e8-aaef-5d6f21cbe713",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:20:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://stolsvidda.com/media/catalog/product/cache/7a3236aaef95070a37b3ec2c1a9c2683/k/a/kamkoteletter2_2nd.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 240
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Koteletter",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Koteletter",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Koteletter-7c4ed67618fa49e8aaef5d6f21cbe713",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "94eb8ac1-a6a2-4bfa-9f63-362082c01aeb",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 240
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 150
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Abborfilet",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Abborfilet",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Abborfilet-94eb8ac1a6a24bfa9f63362082c01aeb",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "964ea9ba-1f65-41ac-a74b-6e40d3bb8721",
+            "created_time": "2026-02-20T14:46:00.000Z",
+            "last_edited_time": "2026-02-25T09:13:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 160
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": 500
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Bakt knoke",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Bakt knoke",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Bakt-knoke-964ea9ba1f6541aca74b6e40d3bb8721",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "a94f157c-7df4-4972-b466-9d3f8d3fd59f",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-24T13:18:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.42
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10147/06b0fe66-d02b-4d5a-b4ee-3a8ae0b297a0.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 290.48
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 122
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kalkun kjøttdeig",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kalkun kjøttdeig",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kalkun-kj-ttdeig-a94f157c7df44972b4669d3f8d3fd59f",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "ad1a5f23-060f-491f-a489-8cfce981bab3",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-24T13:18:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.5
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10007/6a91bbf4-96a4-4332-b023-6239cf25821c.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 278
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 139
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kyllling kjøttdeig",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kyllling kjøttdeig",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kyllling-kj-ttdeig-ad1a5f23060f491fa4898cfce981bab3",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "b8c31649-f048-4201-95f2-e43f32e60784",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-24T13:18:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.8
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10174/275116a7-9bd7-4d3c-9d38-b7821481d756.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 286.25
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 229
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kalkunlår",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kalkunlår",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kalkunl-r-b8c31649f048420195f2e43f32e60784",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "cdc4ecdf-0e8a-40c8-a91e-1b04efd174b5",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-25T12:19:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": None
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Stølsvidda",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Stølsvidda",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://stolsvidda.com/media/catalog/product/cache/7a3236aaef95070a37b3ec2c1a9c2683/n/a/nakkekoteletter_2nd.jpg"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 263
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": None
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Nakkekoteletter",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Nakkekoteletter",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Nakkekoteletter-cdc4ecdf0e8a40c8a91e1b04efd174b5",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "d44764c9-2968-4f6e-9667-25828a656243",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-26T08:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.3
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://scontent-arn2-1.xx.fbcdn.net/v/t39.30808-6/472487051_18379581892107582_6139578578617255856_n.jpg?stp=dst-jpg_s1080x2048_tt6&_nc_cat=110&ccb=1-7&_nc_sid=13d280&_nc_ohc=SM5isKCrC5kQ7kNvwHYeqL0&_nc_oc=AdkXUWWbKhvT4PJco_Ahy0D4AgJzHEQW2A99-XSKA5JqOPoM0SRUBPgi3OajtKEQxM0&_nc_zt=23&_nc_ht=scontent-arn2-1.xx&_nc_gid=sQNfK5NUuV8iJUdBSqOirQ&oh=00_AfvAiHAP8XLKeEw4CM9A57MpLyDTopjN6KjGkBsvdcSkYg&oe=69A1E687"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 363
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 109
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Burger Storfe",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Burger Storfe",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Burger-Storfe-d44764c929684f6e966725828a656243",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "daa196aa-d195-4f53-99b1-2c575d73df53",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-26T08:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 0.6
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Endret av Sander",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Endret av Sander",
+                            "href": None
+                        }
+                    ]
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 539
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 362
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Mørbrad",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Mørbrad",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/M-rbrad-daa196aad1954f5399b12c575d73df53",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "eaf28c09-4818-465f-a78a-1e9cccd52c4a",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-26T08:22:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 1
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "e4729230-0804-48b5-9ab3-feb3554e5f43",
+                        "name": "Ja",
+                        "color": "default"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Opaker",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Opaker",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": None
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 329
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 435
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Høyrygg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Høyrygg",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/H-yrygg-eaf28c094818465fa78a1e9cccd52c4a",
+            "public_url": None
+        },
+        {
+            "object": "page",
+            "id": "fafa7a2d-fb94-4d34-bd8e-6a3f07551b70",
+            "created_time": "2026-02-20T13:24:00.000Z",
+            "last_edited_time": "2026-02-24T13:18:00.000Z",
+            "created_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "last_edited_by": {
+                "object": "user",
+                "id": "2bdd872b-594c-8118-8180-00029276b2c2"
+            },
+            "cover": None,
+            "icon": None,
+            "parent": {
+                "type": "database_id",
+                "database_id": "30db4d1b-8dbf-80f9-b805-e9bcd12e6192"
+            },
+            "archived": False,
+            "in_trash": False,
+            "is_locked": False,
+            "properties": {
+                "f-pack vekt (kg)": {
+                    "id": "B%3Fu%7D",
+                    "type": "number",
+                    "number": 1.1
+                },
+                "Vises på Shopify": {
+                    "id": "BCk%3F",
+                    "type": "select",
+                    "select": {
+                        "id": "5b2e0ad7-485c-4dbf-999a-aa0b055dbc8d",
+                        "name": "Nei",
+                        "color": "red"
+                    }
+                },
+                "Produsent": {
+                    "id": "J%3FbV",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Homlagaarden",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Homlagaarden",
+                            "href": None
+                        }
+                    ]
+                },
+                "Kommentar": {
+                    "id": "LzfV",
+                    "type": "rich_text",
+                    "rich_text": []
+                },
+                "Bilde URL": {
+                    "id": "MjM%3F",
+                    "type": "url",
+                    "url": "https://storage.googleapis.com/dyrket3-api-prod-media/products/hom-10161/b9f14554-748b-4077-910b-016c2b43cd99.png.666x500_q85_crop-%2C0_fillwhite_upscale.png"
+                },
+                "Enhet": {
+                    "id": "Y%5Dhm",
+                    "type": "rich_text",
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "kg",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "kg",
+                            "href": None
+                        }
+                    ]
+                },
+                "Innpris": {
+                    "id": "ZEOj",
+                    "type": "number",
+                    "number": None
+                },
+                "Utpris": {
+                    "id": "oeBM",
+                    "type": "number",
+                    "number": 589.09
+                },
+                "Kapasitet (kg/mnd)": {
+                    "id": "rI%5Bf",
+                    "type": "number",
+                    "number": None
+                },
+                "stykkpris": {
+                    "id": "%7C%7CCC",
+                    "type": "number",
+                    "number": 648
+                },
+                "Produktnavn": {
+                    "id": "title",
+                    "type": "title",
+                    "title": [
+                        {
+                            "type": "text",
+                            "text": {
+                                "content": "Kalkun bryst",
+                                "link": None
+                            },
+                            "annotations": {
+                                "bold": False,
+                                "italic": False,
+                                "strikethrough": False,
+                                "underline": False,
+                                "code": False,
+                                "color": "default"
+                            },
+                            "plain_text": "Kalkun bryst",
+                            "href": None
+                        }
+                    ]
+                }
+            },
+            "url": "https://www.notion.so/Kalkun-bryst-fafa7a2dfb944d34bd8e6a3f07551b70",
+            "public_url": None
+        }
+    ],
+    "next_cursor": None,
+    "has_more": False,
+    "type": "page_or_database",
+    "page_or_database": {},
+    "request_id": "007f267c-386c-4609-b018-30a385e00693"
+}
