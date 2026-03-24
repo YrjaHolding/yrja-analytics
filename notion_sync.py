@@ -263,6 +263,8 @@ def write_slot_results(
             json={"properties": properties},
             timeout=60,
         )
+        if not resp.ok:
+            print(f"  ❌ Notion error for {name}: {resp.status_code} {resp.text}")
         resp.raise_for_status()
         updated += 1
         # time.sleep(0.35)  # Notion rate limit: ~3 req/s

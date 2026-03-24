@@ -60,13 +60,18 @@ def slot_cogs(slot: SlotResult, product: Product) -> float:
     return slot.total_weight * product.purchase_price_per_kg
 
 
+def slot_vat(slot: SlotResult) -> float:
+    """VAT (15 %) embedded in the slot retail price."""
+    return slot_retail(slot) - slot_retail(slot) / 1.15
+
+
 def slot_margin(slot: SlotResult, product: Product) -> float:
-    """Margin for a slot."""
-    return slot_retail(slot) - slot_cogs(slot, product)
+    """Yrja's margin for a slot (ex-VAT retail minus COGS)."""
+    return slot_retail(slot) / 1.15 - slot_cogs(slot, product)
 
 
 def slot_margin_pct(slot: SlotResult, product: Product) -> float:
-    """Margin % for a slot."""
+    """Yrja's margin as % of outprice."""
     ret = slot_retail(slot)
     return (slot_margin(slot, product) / ret * 100) if ret else 0.0
 
@@ -97,23 +102,37 @@ def simulate_box(
         if not slot:
             continue
         for _ in range(slot.n_units):
-            weights = simulate_weights(slot.unit_weight, n_simulations, rng, fixed=prod.fixed_weight)
+            weights = simulate_weights(
+                slot.unit_weight, n_simulations, rng, fixed=prod.fixed_weight
+            )
             total_weight += weights
             total_under += (weights < slot.unit_weight).sum()
             total_packages += n_simulations
 
-    box_retail = sum(slot_retail(slot_configs[p.name]) for p in selected_products if p.name in slot_configs)
-    box_cogs = sum(slot_cogs(slot_configs[p.name], p) for p in selected_products if p.name in slot_configs)
+    box_retail = sum(
+        slot_retail(slot_configs[p.name])
+        for p in selected_products
+        if p.name in slot_configs
+    )
+    box_cogs = sum(
+        slot_cogs(slot_configs[p.name], p)
+        for p in selected_products
+        if p.name in slot_configs
+    )
+    box_ex_vat = box_retail / 1.15
+    box_yrja_margin = box_ex_vat - box_cogs
 
     pct_under = (total_under / total_packages * 100) if total_packages else 0
 
-    return pd.DataFrame({
-        "total_retail": box_retail,
-        "total_cogs": box_cogs,
-        "marginal_earnings": box_retail - box_cogs,
-        "total_weight": total_weight,
-        "pct_under_nominal": pct_under,
-    })
+    return pd.DataFrame(
+        {
+            "total_retail": box_retail,
+            "total_cogs": box_cogs,
+            "yrja_margin": box_yrja_margin,
+            "total_weight": total_weight,
+            "pct_under_nominal": pct_under,
+        }
+    )
 
 
 # ── Per-product weight simulation detail ─────────────────────────────────────
@@ -139,18 +158,20 @@ def simulate_product_weights(
             )
         nominal_total = slot.total_weight
         pct_under = (slot_weights < nominal_total).mean() * 100
-        rows.append({
-            "product": prod.name,
-            "producer": prod.producer,
-            "n_units": slot.n_units,
-            "unit_weight_kg": slot.unit_weight,
-            "nominal_total_kg": nominal_total,
-            "mean_actual_kg": slot_weights.mean(),
-            "std_kg": slot_weights.std(),
-            "min_kg": slot_weights.min(),
-            "max_kg": slot_weights.max(),
-            "pct_under_nominal": pct_under,
-        })
+        rows.append(
+            {
+                "product": prod.name,
+                "producer": prod.producer,
+                "n_units": slot.n_units,
+                "unit_weight_kg": slot.unit_weight,
+                "nominal_total_kg": nominal_total,
+                "mean_actual_kg": slot_weights.mean(),
+                "std_kg": slot_weights.std(),
+                "min_kg": slot_weights.min(),
+                "max_kg": slot_weights.max(),
+                "pct_under_nominal": pct_under,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -173,13 +194,18 @@ def _box_stats(
         total_cogs_val += slot_cogs(slot, p)
         total_weight += slot.total_weight
 
-    margin = total_retail - total_cogs_val
+    vat = total_retail - total_retail / 1.15
+    ex_vat = total_retail / 1.15
+    yrja_margin = ex_vat - total_cogs_val
     return {
         "products": [p.name for p in products],
         "total_retail": round(total_retail, 2),
+        "vat": round(vat, 2),
         "total_cogs": round(total_cogs_val, 2),
-        "marginal_earnings": round(margin, 2),
-        "margin_pct": round(margin / total_retail * 100, 1) if total_retail else 0,
+        "yrja_margin": round(yrja_margin, 2),
+        "yrja_margin_pct": round(yrja_margin / total_retail * 100, 1)
+        if total_retail
+        else 0,
         "total_weight_kg": round(total_weight, 2),
     }
 
@@ -190,23 +216,42 @@ def find_extreme_boxes(
     n_slots: int,
 ) -> dict:
     """
-    Find cheapest, most expensive, and most-balanced boxes.
-    Sorts by COGS since retail is ~equalized by optimizer.
+    Find extreme box configurations:
+    - cheapest / most expensive (by COGS)
+    - lowest / highest Yrja margin %
+    - most balanced (closest to average retail)
     """
     available = [p for p in products if p.name in slot_configs]
 
-    sorted_by_cogs = sorted(available, key=lambda p: slot_cogs(slot_configs[p.name], p))
+    # By COGS
+    sorted_by_cogs = sorted(
+        available, key=lambda p: slot_cogs(slot_configs[p.name], p)
+    )
     cheapest_box = _greedy_fill_diverse(sorted_by_cogs, n_slots)
     most_expensive_box = _greedy_fill_diverse(sorted_by_cogs[::-1], n_slots)
 
-    avg_slot_retail = sum(slot_retail(slot_configs[p.name]) for p in available) / len(available)
+    # By Yrja margin %
+    sorted_by_margin_pct = sorted(
+        available, key=lambda p: slot_margin_pct(slot_configs[p.name], p)
+    )
+    lowest_margin_box = _greedy_fill_diverse(sorted_by_margin_pct, n_slots)
+    highest_margin_box = _greedy_fill_diverse(sorted_by_margin_pct[::-1], n_slots)
+
+    # Balanced
+    avg_slot_retail = sum(
+        slot_retail(slot_configs[p.name]) for p in available
+    ) / len(available)
     target_box_retail = avg_slot_retail * n_slots
 
-    balanced_box = _find_closest_value_box(available, slot_configs, n_slots, target_box_retail)
+    balanced_box = _find_closest_value_box(
+        available, slot_configs, n_slots, target_box_retail
+    )
 
     return {
         "cheapest": _box_stats(cheapest_box, slot_configs),
         "most_expensive": _box_stats(most_expensive_box, slot_configs),
+        "lowest_margin": _box_stats(lowest_margin_box, slot_configs),
+        "highest_margin": _box_stats(highest_margin_box, slot_configs),
         "most_balanced": _box_stats(balanced_box, slot_configs),
         "target_retail": round(target_box_retail, 2),
     }
@@ -241,7 +286,10 @@ def _find_closest_value_box(
         available = [p for p in products if usage[p.name] < max_repeats]
         if not available:
             available = products
-        best = min(available, key=lambda p: abs(slot_retail(slot_configs[p.name]) - ideal_next))
+        best = min(
+            available,
+            key=lambda p: abs(slot_retail(slot_configs[p.name]) - ideal_next),
+        )
         box.append(best)
         usage[best.name] += 1
         remaining_target -= slot_retail(slot_configs[best.name])
@@ -270,10 +318,19 @@ def value_spread_analysis(
         chosen = [available[i] for i in picks]
         total_retail = sum(slot_retail(slot_configs[p.name]) for p in chosen)
         total_cogs_val = sum(slot_cogs(slot_configs[p.name], p) for p in chosen)
-        rows.append({
-            "total_retail": total_retail,
-            "total_cogs": total_cogs_val,
-            "marginal_earnings": total_retail - total_cogs_val,
-        })
+        total_weight = sum(slot_configs[p.name].total_weight for p in chosen)
+        ex_vat = total_retail / 1.15
+        yrja_margin = ex_vat - total_cogs_val
+        rows.append(
+            {
+                "total_retail": total_retail,
+                "total_cogs": total_cogs_val,
+                "yrja_margin": yrja_margin,
+                "yrja_margin_pct": (((yrja_margin / total_cogs_val)) * 100)
+                if total_cogs_val
+                else 0,
+                "total_weight": total_weight,
+            }
+        )
 
     return pd.DataFrame(rows)
