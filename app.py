@@ -19,6 +19,11 @@ from notion_sync import (
     _get_number,
     _normalize_name,
 )
+from shopify_client import (
+    ShopifyClient,
+    VariantMetafields,
+    has_shopify_credentials,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,24 +69,6 @@ st.set_page_config(
 )
 
 
-def _check_password() -> bool:
-    """Show a login form and return True if the password is correct."""
-    if st.session_state.get("authenticated"):
-        return True
-
-    st.title("📦 Yrja Finansdashboard")
-    pwd = st.text_input("Passord", type="password", key="pwd_input")
-    if st.button("Logg inn"):
-        if pwd == st.secrets["password"]:
-            st.session_state["authenticated"] = True
-            st.rerun()
-        else:
-            st.error("Feil passord")
-    st.stop()
-    return False
-
-
-_check_password()
 st.title("📦 Yrja Finansdashboard")
 
 # ── Constants ────────────────────────────────────────────────────────
@@ -145,11 +132,98 @@ def fetch_product_table() -> pd.DataFrame:
                     _get_number(props, "SLOT: tot slot vekt"),
                     "SLOT: tot slot vekt",
                 ),
+                "ODA pris/kg": _get_number(props, "ODA pris/kg"),
+                "AMOI pris/kg": _get_number(props, "AMOI pris/kg "),
+                "Shopify Variant ID": _get_number(props, "Shopify Variant ID"),
             }
         )
 
     df = pd.DataFrame(records)
     return df.sort_values(["Produsent", "Produktnavn"]).reset_index(drop=True)
+
+
+# ── Shopify metafield enrichment ─────────────────────────────────────
+
+_shopify_available = has_shopify_credentials()
+
+
+@st.cache_data(ttl=300, show_spinner="Henter metafelter fra Shopify …")
+def fetch_shopify_metafields() -> dict[str, dict]:
+    """Fetch all product variant metafields from Shopify.
+
+    Returns a serialisable dict for Streamlit caching.
+    """
+    if not _shopify_available:
+        return {}
+    client = ShopifyClient()
+    try:
+        raw = client.fetch_all_variant_metafields()
+        # Key by numeric variant ID for exact matching with Notion
+        result: dict[str, dict] = {}
+        for title, vm in raw.items():
+            entry = {
+                "price_per_kg": vm.price_per_kg,
+                "price_per_portion": vm.price_per_portion,
+                "porsjoner": vm.porsjoner,
+                "slot_antall_enheter": vm.slot_antall_enheter,
+                "slot_fpack_kg": vm.slot_fpack_kg,
+                "sku_name": vm.sku_name,
+                "shopify_title": title,
+                "variant_price": vm.price,
+                "metafields": vm.metafields,
+            }
+            result[vm.variant_id] = entry
+        return result
+    except Exception as e:
+        logger.warning("Shopify fetch failed: %s", e)
+        return {}
+    finally:
+        client.close()
+
+
+def enrich_with_shopify(df: pd.DataFrame) -> pd.DataFrame:
+    """Add Shopify metafield columns to the product DataFrame."""
+    shopify_data = fetch_shopify_metafields()
+    if not shopify_data:
+        df["Pris/kg (utpris)"] = np.nan
+        df["Pris/porsjon"] = np.nan
+        df["Porsjoner"] = np.nan
+        df["S: antall enheter"] = np.nan
+        df["S: f-pack kg"] = np.nan
+        df["SKU Name"] = ""
+        return df
+
+    pris_kg = []
+    pris_porsjon = []
+    porsjoner = []
+    s_enheter = []
+    s_fpack_kg = []
+    sku_names = []
+    for _, row in df.iterrows():
+        # Match by Shopify Variant ID
+        vid = row.get("Shopify Variant ID")
+        vid_str = str(int(vid)) if pd.notna(vid) else ""
+        match = shopify_data.get(vid_str)
+        pris_kg.append(match["price_per_kg"] if match else None)
+        pris_porsjon.append(match["price_per_portion"] if match else None)
+        porsjoner.append(match["porsjoner"] if match else None)
+        s_enheter.append(match["slot_antall_enheter"] if match else None)
+        s_fpack_kg.append(match["slot_fpack_kg"] if match else None)
+        sku_names.append(match["sku_name"] if match else "")
+
+    df["Pris/kg (utpris)"] = pd.array(pris_kg, dtype=pd.Float64Dtype())
+    df["Pris/porsjon"] = pd.array(pris_porsjon, dtype=pd.Float64Dtype())
+    df["Porsjoner"] = pd.array(porsjoner, dtype=pd.Float64Dtype())
+    df["S: antall enheter"] = pd.array(s_enheter, dtype=pd.Float64Dtype())
+    df["S: f-pack kg"] = pd.array(s_fpack_kg, dtype=pd.Float64Dtype())
+    df["SKU Name"] = sku_names
+
+    # Yrja pris/kg is computed dynamically in the benchmark tab
+    # Store slot kg for later use
+    _enheter = df["S: antall enheter"].to_numpy(dtype="float64", na_value=np.nan)
+    _fpack = df["S: f-pack kg"].to_numpy(dtype="float64", na_value=np.nan)
+    df["Slot kg (Shopify)"] = _enheter * _fpack
+    return df
 
 
 # ── Sidebar ──────────────────────────────────────────────────────────
@@ -237,7 +311,13 @@ skio_fast = st.sidebar.number_input(
 )
 
 st.sidebar.divider()
-if st.sidebar.button("🔄 Oppdater fra Notion"):
+if _shopify_available:
+    st.sidebar.caption("✅ Shopify-tilkobling aktiv")
+else:
+    st.sidebar.caption(
+        "⚠️ Shopify ikke konfigurert (sett SHOPIFY_SHOP_DOMAIN og SHOPIFY_ACCESS_TOKEN i .env)"
+    )
+if st.sidebar.button("🔄 Oppdater fra Notion & Shopify"):
     st.cache_data.clear()
     st.rerun()
 
@@ -246,7 +326,11 @@ if st.sidebar.button("🔄 Oppdater fra Notion"):
 
 
 def compute_cost_breakdown(
-    price: float, varekostnad: float, total_fpacks: float
+    price: float,
+    varekostnad: float,
+    total_fpacks: float,
+    utpris_kg_total: float | None = None,
+    pris_porsjon_total: float | None = None,
 ) -> dict:
     """Compute per-order cost breakdown for a subscription tier."""
     revenue_ex_mva = price / (1 + MVA_RATE)
@@ -268,7 +352,7 @@ def compute_cost_breakdown(
         (driftsresultat / revenue_ex_mva * 100) if revenue_ex_mva else 0.0
     )
 
-    return {
+    result = {
         "Omsetning inkl. MVA": price,
         "MVA (15 %)": -mva_amount,
         "Omsetning eks. MVA": revenue_ex_mva,
@@ -281,6 +365,12 @@ def compute_cost_breakdown(
         "Driftsresultat": driftsresultat,
         "Driftsresultat/Omsetn": drifts_omsetn_pct,
     }
+    # Shopify pricing data (if available)
+    if utpris_kg_total is not None:
+        result["Utpris/kg totalt"] = utpris_kg_total
+    if pris_porsjon_total is not None:
+        result["Pris/porsjon totalt"] = pris_porsjon_total
+    return result
 
 
 def run_simulation(
@@ -310,6 +400,12 @@ def run_simulation(
     fpacks_arr = df_sim["SLOT: antall enheter"].values
     slot_cost = innpris * vekt
 
+    # Shopify pricing arrays (NaN-safe)
+    utpris_kg_arr = df_sim["Slot utpris/kg (kr)"].values
+    pris_porsjon_arr = df_sim["Slot pris/porsjon (kr)"].values
+    slot_vekt_shopify_arr = df_sim["Slot vekt (Shopify)"].values
+    slot_porsjoner_arr = df_sim["Slot porsjoner"].values
+
     # Map df_sim.index → local 0..n-1 positions
     idx_to_local = {idx: i for i, idx in enumerate(df_sim.index)}
     local_to_idx = df_sim.index.values
@@ -326,6 +422,12 @@ def run_simulation(
     # Aggregate per-box totals via fancy indexing
     total_cogs = slot_cost[sim].sum(axis=1)
     total_fpacks = fpacks_arr[sim].sum(axis=1)
+
+    # Shopify pricing totals per box (nansum to handle missing data)
+    total_utpris_kg = np.nansum(utpris_kg_arr[sim], axis=1)
+    total_pris_porsjon = np.nansum(pris_porsjon_arr[sim], axis=1)
+    total_box_kg = np.nansum(slot_vekt_shopify_arr[sim], axis=1)
+    total_porsjoner = np.nansum(slot_porsjoner_arr[sim], axis=1)
 
     # Fixed revenue / payment components
     revenue_ex_mva = price / (1 + MVA_RATE)
@@ -349,16 +451,25 @@ def run_simulation(
     # Convert local indices back to df_sim index values
     picks_matrix = local_to_idx[sim]
 
+    metrics_dict = {
+        "Innkjøpspris": total_cogs,
+        "Dekningsbidrag": dekningsbidrag,
+        "Lager, distribusjon & transaksjoner": ops_total,
+        "MVA": np.full(n_sims, mva),
+        "Driftsresultat": bunnlinje,
+    }
+    # Add Shopify pricing columns if any data is present
+    if not np.all(np.isnan(utpris_kg_arr)):
+        metrics_dict["Utpris/kg totalt"] = total_utpris_kg
+    if not np.all(np.isnan(pris_porsjon_arr)):
+        metrics_dict["Pris/porsjon totalt"] = total_pris_porsjon
+    if not np.all(np.isnan(slot_vekt_shopify_arr)):
+        metrics_dict["Boks vekt (kg)"] = total_box_kg
+    if not np.all(np.isnan(slot_porsjoner_arr)):
+        metrics_dict["Boks porsjoner"] = total_porsjoner
+
     return {
-        "metrics": pd.DataFrame(
-            {
-                "Innkjøpspris": total_cogs,
-                "Dekningsbidrag": dekningsbidrag,
-                "Lager, distribusjon & transaksjoner": ops_total,
-                "MVA": np.full(n_sims, mva),
-                "Driftsresultat": bunnlinje,
-            }
-        ),
+        "metrics": pd.DataFrame(metrics_dict),
         "picks": picks_matrix,
     }
 
@@ -449,15 +560,20 @@ def render_box(
         row = df_sim.loc[idx]
         slot_vekt = row["SLOT: tot slot vekt"]
         innpris_kg = row["Innpris (kr/kg)"]
-        rows.append(
-            {
-                "Slot": slot_nr,
-                "Produktnavn": row["Produktnavn"],
-                "F-packs": int(row["SLOT: antall enheter"]),
-                "Vekt (kg)": round(slot_vekt, 2),
-                "Innpris (kr)": round(innpris_kg * slot_vekt, 2),
-            }
-        )
+        row_dict = {
+            "Slot": slot_nr,
+            "Produktnavn": row["Produktnavn"],
+            "F-packs": int(row["SLOT: antall enheter"]),
+            "Vekt (kg)": round(slot_vekt, 2),
+            "Innpris (kr)": round(innpris_kg * slot_vekt, 2),
+        }
+        utpris = row.get("Pris/kg (utpris)")
+        if pd.notna(utpris):
+            row_dict["Utpris/kg (kr)"] = round(utpris * slot_vekt, 2)
+        porsjon = row.get("Pris/porsjon")
+        if pd.notna(porsjon):
+            row_dict["Pris/porsjon (kr)"] = round(porsjon, 2)
+        rows.append(row_dict)
 
     box_df = pd.DataFrame(rows)
     tot_fpacks = box_df["F-packs"].sum()
@@ -550,6 +666,7 @@ def render_box(
 # ── Shared data
 
 df = fetch_product_table()
+df = enrich_with_shopify(df)
 
 df_sim = df.dropna(
     subset=["Innpris (kr/kg)", "SLOT: tot slot vekt", "SLOT: antall enheter"]
@@ -557,6 +674,14 @@ df_sim = df.dropna(
 df_sim["Slot innpris (kr)"] = (
     df_sim["Innpris (kr/kg)"] * df_sim["SLOT: tot slot vekt"]
 )
+# Compute customer-facing slot prices if Shopify data is available
+df_sim["Slot utpris/kg (kr)"] = (
+    df_sim["Pris/kg (utpris)"] * df_sim["SLOT: tot slot vekt"]
+)
+df_sim["Slot pris/porsjon (kr)"] = df_sim["Pris/porsjon"]
+# Shopify slot-level metrics for box weight and portions histograms
+df_sim["Slot vekt (Shopify)"] = df_sim["S: antall enheter"] * df_sim["S: f-pack kg"]
+df_sim["Slot porsjoner"] = df_sim["Porsjoner"]
 
 if len(df_sim) > 0:
     avg_slot_cogs = df_sim["Slot innpris (kr)"].mean()
@@ -570,7 +695,9 @@ else:
 #  TABS
 # ══════════════════════════════════════════════════════════════════════
 
-tab_dashboard, tab_analyse = st.tabs(["📦 Dashboard", "📊 Analyse"])
+tab_dashboard, tab_analyse, tab_benchmark, tab_health = st.tabs(
+    ["📦 Dashboard", "📊 Unit Economics", "📈 Pris benchmarking", "🏥 Forretningshelse"]
+)
 
 
 # ── Tab 1: Dashboard ─────────────────────────────────────────────────
@@ -578,7 +705,34 @@ tab_dashboard, tab_analyse = st.tabs(["📦 Dashboard", "📊 Analyse"])
 with tab_dashboard:
     st.subheader("Produktoversikt")
     st.dataframe(df, use_container_width=True, hide_index=True)
-    st.caption(f"{len(df)} produkter lastet fra Notion")
+    _shopify_meta = fetch_shopify_metafields()
+    _n_matched = df["Pris/kg (utpris)"].notna().sum()
+    st.caption(
+        f"{len(df)} produkter lastet fra Notion"
+        + (f" · {_n_matched} med Shopify-prisdata" if _shopify_meta else "")
+    )
+    if _shopify_meta:
+        with st.expander("🔍 Shopify metafelter (debug)"):
+            all_keys: set[str] = set()
+            for title, data in _shopify_meta.items():
+                all_keys.update(data.get("metafields", {}).keys())
+            st.write("**Metafield-nøkler funnet:**", sorted(all_keys))
+            sample_rows = []
+            for title, data in list(_shopify_meta.items())[:10]:
+                sample_rows.append(
+                    {
+                        "Produkt": title,
+                        "Pris/kg": data["price_per_kg"],
+                        "Pris/porsjon": data["price_per_portion"],
+                        "Variant pris": data["variant_price"],
+                        "Alle metafelter": str(data["metafields"]),
+                    }
+                )
+            st.dataframe(
+                pd.DataFrame(sample_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
 
     st.subheader("Abonnementer")
     cols = st.columns(3)
@@ -720,7 +874,7 @@ with tab_dashboard:
                 )
 
 
-# ── Tab 2: Analyse ───────────────────────────────────────────────────
+# ── Tab 2: Unit Economics ────────────────────────────────────────────
 
 # Chart metrics: (data_column, display_name)
 CHART_METRICS = [
@@ -728,6 +882,13 @@ CHART_METRICS = [
     ("Dekningsbidrag", "Dekningsbidrag"),
     ("Lager, distribusjon & transaksjoner", "Andre driftskostnader"),
     ("Driftsresultat", "Driftsresultat"),
+]
+# Shopify pricing chart metrics (conditionally shown when data is available)
+SHOPIFY_CHART_METRICS = [
+    ("Utpris/kg totalt", "Utpris/kg (totalt for boksen)"),
+    ("Pris/porsjon totalt", "Pris/porsjon (totalt for boksen)"),
+    ("Boks vekt (kg)", "Boks vekt (kg) — antall enheter × f-pack kg"),
+    ("Boks porsjoner", "Boks porsjoner — sum porsjoner per slot"),
 ]
 
 with tab_analyse:
@@ -844,7 +1005,9 @@ with tab_analyse:
                     * df_sim.loc[_bidx, "SLOT: tot slot vekt"]
                     * _bfrac
                 )
-                _bonus_fpacks = df_sim.loc[_bidx, "SLOT: antall enheter"] * _bfrac
+                _bonus_fpacks = (
+                    df_sim.loc[_bidx, "SLOT: antall enheter"] * _bfrac
+                )
                 st.caption(
                     f"Bonus: {_bonus_pct}% av {_bonus_choice} "
                     f"= {_bonus_cogs:,.1f} kr varekost, "
@@ -856,13 +1019,16 @@ with tab_analyse:
     if all(p is not None for p in _custom_picks):
         _c_cogs = (
             sum(
-                df_sim.loc[idx, "Innpris (kr/kg)"] * df_sim.loc[idx, "SLOT: tot slot vekt"]
+                df_sim.loc[idx, "Innpris (kr/kg)"]
+                * df_sim.loc[idx, "SLOT: tot slot vekt"]
                 for idx in _custom_picks
             )
             + _bonus_cogs
         )
         _c_fpacks = (
-            sum(df_sim.loc[idx, "SLOT: antall enheter"] for idx in _custom_picks)
+            sum(
+                df_sim.loc[idx, "SLOT: antall enheter"] for idx in _custom_picks
+            )
             + _bonus_fpacks
         )
         _c_rev = price / (1 + MVA_RATE)
@@ -871,8 +1037,10 @@ with tab_analyse:
             + lager_var * _c_fpacks
             + distribusjon
             + emballasje
-            + price * (shopify_var_pct / 100) + shopify_fast
-            + price * (skio_var_pct / 100) + skio_fast
+            + price * (shopify_var_pct / 100)
+            + shopify_fast
+            + price * (skio_var_pct / 100)
+            + skio_fast
         )
         _c_dek = _c_rev - _c_cogs
         _c_drift = _c_dek - _c_ops
@@ -932,10 +1100,27 @@ with tab_analyse:
         }
         if _has_custom:
             if is_pct:
-                row_dict["Min boks"] = _fmt_pct(custom_metrics[data_col] / revenue_ex_mva * 100)
+                row_dict["Min boks"] = _fmt_pct(
+                    custom_metrics[data_col] / revenue_ex_mva * 100
+                )
             else:
                 row_dict["Min boks"] = _fmt_kr(custom_metrics[data_col])
         summary_rows.append(row_dict)
+
+    # Add Shopify pricing rows to summary if data is present
+    for data_col, display_name in SHOPIFY_CHART_METRICS:
+        if data_col in results_df.columns:
+            vals = results_df[data_col]
+            row_dict = {
+                "Metrikk": display_name,
+                "Snitt": _fmt_kr(vals.mean()),
+                "Std.avvik": _fmt_kr(vals.std()),
+                "Min": _fmt_kr(vals.min()),
+                "Maks": _fmt_kr(vals.max()),
+            }
+            if _has_custom and data_col in custom_metrics:
+                row_dict["Min boks"] = _fmt_kr(custom_metrics[data_col])
+            summary_rows.append(row_dict)
 
     _COST_SUMMARY = {"Varekostnad", "Andre driftskostnader"}
     _BOLD_SUMMARY = {"Dekningsbidrag", "Driftsresultat"}
@@ -1026,6 +1211,39 @@ with tab_analyse:
             )
             st.plotly_chart(fig, use_container_width=True)
 
+    # ── Shopify pricing distributions ─────────────────────────────
+    _has_shopify_charts = any(
+        col in results_df.columns for col, _ in SHOPIFY_CHART_METRICS
+    )
+    if _has_shopify_charts:
+        st.subheader("Prisfordelinger (Shopify)")
+        for data_col, display_name in SHOPIFY_CHART_METRICS:
+            if data_col not in results_df.columns:
+                continue
+            fig = px.histogram(
+                results_df,
+                x=data_col,
+                nbins=60,
+                title=display_name,
+                labels={data_col: "kr"},
+            )
+            if custom_metrics and data_col in custom_metrics:
+                fig.add_vline(
+                    x=custom_metrics[data_col],
+                    line_dash="dash",
+                    line_color="red",
+                    line_width=2,
+                    annotation_text="Min boks",
+                    annotation_position="top",
+                    annotation_font_size=10,
+                )
+            fig.update_layout(
+                showlegend=False,
+                height=320,
+                margin=dict(t=40, b=30),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
     # ── Example boxes ─────────────────────────────────────────
     EXAMPLE_METRICS = [
         ("Innkjøpspris", "Varekostnad"),
@@ -1047,3 +1265,883 @@ with tab_analyse:
                     price,
                     f"{variant}: {value:,.0f} kr",
                 )
+
+
+# ── Tab 3: Pris benchmarking ────────────────────────────────────────
+
+with tab_benchmark:
+    if not _shopify_available:
+        st.warning("Shopify ikke konfigurert — sett SHOPIFY_SHOP_DOMAIN og SHOPIFY_ACCESS_TOKEN i .env")
+        st.stop()
+
+    # ── Yrja pricing controls ─────────────────────────────
+    _DELIVERY_COST = 149.0
+    _pc1, _pc2 = st.columns(2)
+    _slot_price = _pc1.slider(
+        "Pris per slot (kr)", min_value=200, max_value=600, value=400, step=10, key="bench_slot_price",
+    )
+    _pc2.metric("Leveringskostnad", f"{_DELIVERY_COST:,.0f} kr")
+
+    # Show effective price per slot for each box size
+    _eff_cols = st.columns(3)
+    for _i, (_lbl, _sub_info) in enumerate(SUBSCRIPTIONS.items()):
+        _ns = _sub_info["slots"]
+        _total = _slot_price * _ns + _DELIVERY_COST
+        _eff_per_slot = _total / _ns
+        _eff_cols[_i].metric(_lbl, f"{_eff_per_slot:,.0f} kr/slot", delta=f"totalt {_total:,.0f} kr")
+
+    # Compute Yrja pris/kg dynamically based on slider
+    # Effective price per slot = (slot_price * n_slots + delivery) / n_slots
+    # For the product table we use a simple slot_price since delivery is box-level
+    _slot_kg_col = df["Slot kg (Shopify)"].to_numpy(dtype="float64", na_value=np.nan)
+    df["Yrja pris/kg"] = np.where(_slot_kg_col > 0, _slot_price / _slot_kg_col, np.nan)
+
+    # Also update df_sim with the new Yrja pris/kg
+    _sim_slot_kg = df_sim["Slot kg (Shopify)"].to_numpy(dtype="float64", na_value=np.nan) if "Slot kg (Shopify)" in df_sim.columns else df_sim["S: antall enheter"].to_numpy(dtype="float64", na_value=np.nan) * df_sim["S: f-pack kg"].to_numpy(dtype="float64", na_value=np.nan)
+    df_sim["Yrja pris/kg"] = np.where(_sim_slot_kg > 0, _slot_price / _sim_slot_kg, np.nan)
+
+    st.divider()
+
+    # ── Section A: Product table from Shopify ─────────────────
+    st.subheader("Produktoversikt")
+    _bench_cols = [
+        "Produktnavn", "SKU Name", "Porsjoner",
+        "S: antall enheter", "S: f-pack kg",
+        "Yrja pris/kg", "ODA pris/kg", "AMOI pris/kg",
+    ]
+    _bench_display = df[[c for c in _bench_cols if c in df.columns]].copy()
+
+    # ── Section B: Filter ─────────────────────────────────────
+    _fc1, _fc2 = st.columns(2)
+    _filter_oda = _fc1.checkbox("Kun produkter med ODA pris/kg", value=False, key="bench_filter_oda")
+    _filter_amoi = _fc2.checkbox("Kun produkter med AMOI pris/kg", value=False, key="bench_filter_amoi")
+
+    _bench_filtered = _bench_display.copy()
+    if _filter_oda and "ODA pris/kg" in _bench_filtered.columns:
+        _bench_filtered = _bench_filtered[_bench_filtered["ODA pris/kg"].notna()]
+    if _filter_amoi and "AMOI pris/kg" in _bench_filtered.columns:
+        _bench_filtered = _bench_filtered[_bench_filtered["AMOI pris/kg"].notna()]
+
+    st.dataframe(_bench_filtered, use_container_width=True, hide_index=True)
+    st.caption(f"{len(_bench_filtered)} produkter vist")
+
+    # ── Section C: Price/kg scatter chart ─────────────────────
+    st.subheader("Pris/kg sammenligning")
+    _scatter_df = _bench_filtered.dropna(subset=["Produktnavn"]).copy()
+    _scatter_rows: list[dict] = []
+    for _, _r in _scatter_df.iterrows():
+        _name = _r["Produktnavn"]
+        if pd.notna(_r.get("Yrja pris/kg")):
+            _scatter_rows.append({"Produkt": _name, "kr/kg": _r["Yrja pris/kg"], "Kilde": "Yrja"})
+        if pd.notna(_r.get("ODA pris/kg")):
+            _scatter_rows.append({"Produkt": _name, "kr/kg": _r["ODA pris/kg"], "Kilde": "ODA"})
+        if pd.notna(_r.get("AMOI pris/kg")):
+            _scatter_rows.append({"Produkt": _name, "kr/kg": _r["AMOI pris/kg"], "Kilde": "AMOI"})
+
+    if _scatter_rows:
+        _scatter_plot_df = pd.DataFrame(_scatter_rows)
+        _yrja_data = _scatter_plot_df[_scatter_plot_df["Kilde"] == "Yrja"]
+        _competitor_data = _scatter_plot_df[_scatter_plot_df["Kilde"] != "Yrja"]
+
+        fig = go.Figure()
+        # Yrja as a line
+        if len(_yrja_data) > 0:
+            fig.add_trace(go.Scatter(
+                x=_yrja_data["Produkt"],
+                y=_yrja_data["kr/kg"],
+                mode="lines+markers",
+                name="Yrja",
+                line=dict(color="#27ae60", width=2),
+                marker=dict(size=8),
+            ))
+        # ODA as scatter
+        _oda_data = _competitor_data[_competitor_data["Kilde"] == "ODA"]
+        if len(_oda_data) > 0:
+            fig.add_trace(go.Scatter(
+                x=_oda_data["Produkt"],
+                y=_oda_data["kr/kg"],
+                mode="markers",
+                name="ODA",
+                marker=dict(color="#f1c40f", size=10),
+            ))
+        # AMOI as scatter
+        _amoi_data = _competitor_data[_competitor_data["Kilde"] == "AMOI"]
+        if len(_amoi_data) > 0:
+            fig.add_trace(go.Scatter(
+                x=_amoi_data["Produkt"],
+                y=_amoi_data["kr/kg"],
+                mode="markers",
+                name="AMOI",
+                marker=dict(color="#3498db", size=10),
+            ))
+        fig.update_layout(
+            title="Pris per kg: Yrja vs. ODA vs. AMOI",
+            height=500,
+            xaxis_tickangle=-45,
+            yaxis_title="kr/kg",
+            margin=dict(b=120),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("Ingen prisdata tilgjengelig for valgt filter.")
+
+    # ── Section D: Filtered benchmark simulations ───────────────
+    st.subheader("Bokssimulering — prisbenchmark")
+
+    _b_sub_label = st.selectbox(
+        "Velg abonnement", list(SUBSCRIPTIONS.keys()), key="bench_sub"
+    )
+    _b_sub = SUBSCRIPTIONS[_b_sub_label]
+    _b_n_slots = _b_sub["slots"]
+    _b_price = prices[_b_sub_label]
+    _B_N_SIMS = 10_000
+
+    # Build filtered product pools
+    _yrja_col = df_sim["Yrja pris/kg"].to_numpy(dtype="float64", na_value=np.nan)
+    _oda_col = df_sim["ODA pris/kg"].to_numpy(dtype="float64", na_value=np.nan) if "ODA pris/kg" in df_sim.columns else np.full(len(df_sim), np.nan)
+    _amoi_col = df_sim["AMOI pris/kg"].to_numpy(dtype="float64", na_value=np.nan) if "AMOI pris/kg" in df_sim.columns else np.full(len(df_sim), np.nan)
+
+    _has_yrja = ~np.isnan(_yrja_col)
+    _has_oda = ~np.isnan(_oda_col)
+    _has_amoi = ~np.isnan(_amoi_col)
+
+    _pool_yrja_oda = df_sim[_has_yrja & _has_oda]
+    _pool_yrja_amoi = df_sim[_has_yrja & _has_amoi]
+    _pool_all_three = df_sim[_has_yrja & _has_oda & _has_amoi]
+
+    st.caption(
+        f"Produkter: {len(_pool_yrja_oda)} med Yrja+ODA, "
+        f"{len(_pool_yrja_amoi)} med Yrja+AMOI, "
+        f"{len(_pool_all_three)} med alle tre"
+    )
+
+    _b_run = st.button("🔬 Kjør benchmark-simulering", type="primary", key="bench_run")
+    _b_key = f"bench_{_b_sub_label}"
+
+    def _run_filtered_sim(pool: pd.DataFrame, n_slots: int, price: float, n_sims: int) -> dict | None:
+        if len(pool) == 0:
+            return None
+        return run_simulation(pool, n_slots, {}, price, n_sims)
+
+    if _b_run:
+        st.session_state[_b_key] = {
+            "yrja_oda": _run_filtered_sim(_pool_yrja_oda, _b_n_slots, _b_price, _B_N_SIMS),
+            "yrja_amoi": _run_filtered_sim(_pool_yrja_amoi, _b_n_slots, _b_price, _B_N_SIMS),
+            "all_three": _run_filtered_sim(_pool_all_three, _b_n_slots, _b_price, _B_N_SIMS),
+        }
+
+    if _b_key not in st.session_state:
+        st.info("Klikk **Kjør benchmark-simulering** for å starte.")
+        st.stop()
+
+    _b_res = st.session_state[_b_key]
+
+    # Effective Yrja total per box = slot_price * n_slots + delivery
+    _yrja_box_total = _slot_price * _b_n_slots + _DELIVERY_COST
+    _AMOI_DELIVERY = 169.0
+
+    # ── Helper: compute box-level kr totals from picks ─────────
+    def _compute_box_totals(pool: pd.DataFrame, picks: np.ndarray) -> dict:
+        """Compute per-box Yrja/ODA/AMOI total kr (not kr/kg) for each simulated box."""
+        _kg = pool["SLOT: tot slot vekt"].values
+        _y = pool["Yrja pris/kg"].to_numpy(dtype="float64", na_value=np.nan)
+        _o = pool["ODA pris/kg"].to_numpy(dtype="float64", na_value=np.nan) if "ODA pris/kg" in pool.columns else np.full(len(pool), np.nan)
+        _a = pool["AMOI pris/kg"].to_numpy(dtype="float64", na_value=np.nan) if "AMOI pris/kg" in pool.columns else np.full(len(pool), np.nan)
+        _i2l = {idx: i for i, idx in enumerate(pool.index)}
+        _lp = np.vectorize(_i2l.get)(picks)
+        _slot_kg = _kg[_lp]
+        # Yrja total = fixed box price (slot_price * n_slots + delivery)
+        _n_sims = picks.shape[0]
+        _yrja_tot = np.full(_n_sims, _yrja_box_total)
+        # Competitor totals = sum(pris/kg * kg) across slots
+        _oda_tot = (_o[_lp] * _slot_kg).sum(axis=1)
+        _amoi_tot = (_a[_lp] * _slot_kg).sum(axis=1) + _AMOI_DELIVERY
+        return {
+            "yrja_tot": _yrja_tot,
+            "oda_tot": _oda_tot,
+            "amoi_tot": _amoi_tot,
+            "total_kg": _slot_kg.sum(axis=1),
+        }
+
+    # ── Section E: Discrepancy summary table ───────────────────
+    st.subheader("Benchmark-resultater")
+
+    _summary_rows = []
+    for _label, _pool, _comp_key in [
+        ("Yrja vs ODA", _pool_yrja_oda, "yrja_oda"),
+        ("Yrja vs AMOI", _pool_yrja_amoi, "yrja_amoi"),
+        ("Yrja vs ODA + AMOI", _pool_all_three, "all_three"),
+    ]:
+        _sim = _b_res.get(_comp_key)
+        if _sim is None:
+            continue
+        _picks = _sim["picks"]
+        _bt = _compute_box_totals(_pool, _picks)
+
+        # Yrja vs ODA discrepancy (in kr per box)
+        if "ODA" in _label or "alle" in _label.lower() or "ODA + AMOI" in _label:
+            _diff_oda = _bt["yrja_tot"] - _bt["oda_tot"]
+            _pct_oda = _diff_oda / _bt["oda_tot"] * 100
+            _summary_rows.append({
+                "Sammenligning": f"{_label} (ODA)",
+                "Ant. produkter": len(_pool),
+                "Snitt avvik (kr)": f"{_diff_oda.mean():+,.0f}",
+                "Snitt avvik (%)": f"{_pct_oda.mean():+.1f}%",
+                "Std.avvik (kr)": f"{_diff_oda.std():,.0f}",
+                "Min (kr)": f"{_diff_oda.min():+,.0f}",
+                "Maks (kr)": f"{_diff_oda.max():+,.0f}",
+            })
+        # Yrja vs AMOI discrepancy
+        if "AMOI" in _label:
+            _diff_amoi = _bt["yrja_tot"] - _bt["amoi_tot"]
+            _pct_amoi = _diff_amoi / _bt["amoi_tot"] * 100
+            _summary_rows.append({
+                "Sammenligning": f"{_label} (AMOI)",
+                "Ant. produkter": len(_pool),
+                "Snitt avvik (kr)": f"{_diff_amoi.mean():+,.0f}",
+                "Snitt avvik (%)": f"{_pct_amoi.mean():+.1f}%",
+                "Std.avvik (kr)": f"{_diff_amoi.std():,.0f}",
+                "Min (kr)": f"{_diff_amoi.min():+,.0f}",
+                "Maks (kr)": f"{_diff_amoi.max():+,.0f}",
+            })
+
+    if _summary_rows:
+        st.dataframe(pd.DataFrame(_summary_rows), use_container_width=True, hide_index=True)
+        st.caption("Positivt avvik = Yrja er dyrere, negativt = Yrja er billigere")
+
+    # ── Histogram: box total kr distributions ──────────────────
+    st.subheader("Prisfordeling per boks (total kr)")
+    _sim_all = _b_res.get("all_three")
+    if _sim_all is not None:
+        _bt_all = _compute_box_totals(_pool_all_three, _sim_all["picks"])
+        _hist_fig = go.Figure()
+        _hist_fig.add_trace(go.Histogram(
+            x=_bt_all["yrja_tot"], name="Yrja",
+            marker_color="#27ae60", opacity=0.6, nbinsx=60,
+        ))
+        _hist_fig.add_trace(go.Histogram(
+            x=_bt_all["oda_tot"], name="ODA",
+            marker_color="#f1c40f", opacity=0.6, nbinsx=60,
+        ))
+        _hist_fig.add_trace(go.Histogram(
+            x=_bt_all["amoi_tot"], name="AMOI",
+            marker_color="#3498db", opacity=0.6, nbinsx=60,
+        ))
+        _hist_fig.update_layout(
+            barmode="overlay", height=400,
+            xaxis_title="Total boks (kr)", yaxis_title="Antall bokser",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+            margin=dict(t=40, b=30),
+        )
+        st.plotly_chart(_hist_fig, use_container_width=True)
+    else:
+        st.info("Ingen produkter med alle tre priskilder — kan ikke vise histogram.")
+
+    # ── Box explorer (all-three pool) ─────────────────────────
+    st.subheader("Utforsk enkeltbokser")
+    if _sim_all is None or len(_pool_all_three) == 0:
+        st.info("Ingen produkter med alle tre priskilder.")
+        st.stop()
+
+    _ex_picks = _sim_all["picks"]
+    _ex_n = _ex_picks.shape[0]
+    st.markdown(f"**{_ex_n:,}** bokser simulert med {len(_pool_all_three)} produkter (Yrja + ODA + AMOI)")
+
+    _box_idx = st.number_input(
+        "Boks nr.", min_value=1, max_value=_ex_n, value=1, step=1, key="bench_box_idx",
+    )
+    _bi = _box_idx - 1
+    _box_picks = _ex_picks[_bi]
+    # Yrja per-slot price WITHOUT delivery = slot_price
+    _yrja_slot_only = _slot_price
+
+    _box_rows = []
+    for _slot_nr, _idx in enumerate(_box_picks, 1):
+        _row = _pool_all_three.loc[_idx]
+        _slot_kg = float(_row["SLOT: tot slot vekt"]) if pd.notna(_row["SLOT: tot slot vekt"]) else 0.0
+        _oda_pkg = float(_row["ODA pris/kg"]) if pd.notna(_row.get("ODA pris/kg")) else 0.0
+        _amoi_pkg = float(_row["AMOI pris/kg"]) if pd.notna(_row.get("AMOI pris/kg")) else 0.0
+        _box_rows.append({
+            "Slot": str(_slot_nr),
+            "Produktnavn": _row["Produktnavn"],
+            "kg": round(_slot_kg, 2),
+            "Yrja (kr)": round(_yrja_slot_only, 0),
+            "ODA (kr)": round(_oda_pkg * _slot_kg, 0),
+            "AMOI (kr)": round(_amoi_pkg * _slot_kg, 0),
+        })
+
+    _box_detail_df = pd.DataFrame(_box_rows)
+    _products_yrja = _slot_price * _b_n_slots
+    _products_oda = _box_detail_df["ODA (kr)"].sum()
+    _products_amoi = _box_detail_df["AMOI (kr)"].sum()
+    _tot_kg = _box_detail_df["kg"].sum()
+    _n = len(_box_rows)
+
+    # Delivery rows + totals
+    _extra = pd.DataFrame([
+        {"Slot": "", "Produktnavn": "Levering", "kg": None,
+         "Yrja (kr)": round(_DELIVERY_COST, 0), "ODA (kr)": None, "AMOI (kr)": round(_AMOI_DELIVERY, 0)},
+        {"Slot": "", "Produktnavn": "TOTALT", "kg": round(_tot_kg, 2),
+         "Yrja (kr)": round(_products_yrja + _DELIVERY_COST, 0),
+         "ODA (kr)": round(_products_oda, 0),
+         "AMOI (kr)": round(_products_amoi + _AMOI_DELIVERY, 0)},
+        {"Slot": "", "Produktnavn": "SNITT per slot", "kg": round(_tot_kg / _n, 2),
+         "Yrja (kr)": round((_products_yrja + _DELIVERY_COST) / _n, 0),
+         "ODA (kr)": round(_products_oda / _n, 0),
+         "AMOI (kr)": round((_products_amoi + _AMOI_DELIVERY) / _n, 0)},
+    ])
+    _box_detail_df = pd.concat([_box_detail_df, _extra], ignore_index=True)
+    st.dataframe(_box_detail_df, use_container_width=True, hide_index=True)
+
+
+# ── Tab 4: Forretningshelse ──────────────────────────────────────────
+
+with tab_health:
+    st.warning("🚧 **WORK IN PROGRESS** — Denne fanen er under utvikling og tallene er ikke verifisert.")
+
+    if len(df_sim) == 0:
+        st.warning(
+            "Ingen produkter med komplett data (Innpris + SLOT-kolonner)."
+        )
+        st.stop()
+
+    st.subheader("Forretningsmodell & vekstprognose")
+    st.caption(
+        "Juster parameterne for å se hvordan virksomheten utvikler seg over tid. "
+        "Varekostnad og driftskostnader beregnes fra produktdata og sidebar-parametere."
+    )
+
+    # ── Input parameters ─────────────────────────────────────
+    _h_col1, _h_col2, _h_col3 = st.columns(3)
+
+    with _h_col1:
+        st.markdown("**Vekst & churn**")
+        _h_start_subs = st.number_input(
+            "Startabonnenter",
+            value=100,
+            min_value=0,
+            step=10,
+            key="h_start_subs",
+        )
+        _h_monthly_growth = st.number_input(
+            "Månedlig vekst nye kunder (%)",
+            value=15.0,
+            min_value=0.0,
+            max_value=200.0,
+            step=1.0,
+            format="%.1f",
+            key="h_growth",
+            help="Nye abonnenter per måned som andel av nåværende base",
+        )
+        _h_churn = st.number_input(
+            "Månedlig churn (%)",
+            value=5.0,
+            min_value=0.0,
+            max_value=100.0,
+            step=0.5,
+            format="%.1f",
+            key="h_churn",
+            help="Andel abonnenter som avslutter per måned",
+        )
+        _h_months = st.slider(
+            "Tidshorisont (måneder)",
+            min_value=6,
+            max_value=60,
+            value=24,
+            step=6,
+            key="h_months",
+        )
+
+    with _h_col2:
+        st.markdown("**Kundeanskaffelse & pris**")
+        _h_cac = st.number_input(
+            "CAC per kunde (kr)",
+            value=500.0,
+            min_value=0.0,
+            step=50.0,
+            format="%.0f",
+            key="h_cac",
+            help="Gjennomsnittlig kostnad for å skaffe én ny abonnent",
+        )
+        _h_deliveries = st.number_input(
+            "Leveranser per måned",
+            value=2.0,
+            min_value=0.5,
+            max_value=8.0,
+            step=0.5,
+            format="%.1f",
+            key="h_deliveries",
+            help="Antall boksleveranser per abonnent per måned",
+        )
+        _h_price_factor = st.number_input(
+            "Prisjustering (%)",
+            value=0.0,
+            min_value=-50.0,
+            max_value=100.0,
+            step=5.0,
+            format="%.0f",
+            key="h_price_factor",
+            help="Juster alle abonnementspriser relativt til sidebar-verdiene",
+        )
+
+    with _h_col3:
+        st.markdown("**Abonnementsmiks (vekting)**")
+        _h_mix_raw: dict[str, int] = {}
+        for _lbl, _sub_info in SUBSCRIPTIONS.items():
+            _h_mix_raw[_lbl] = st.slider(
+                f"{_lbl} ({_sub_info['slots']} slots)",
+                min_value=0,
+                max_value=100,
+                value=33,
+                key=f"h_mix_{_lbl}",
+            )
+        _h_mix_sum = sum(_h_mix_raw.values()) or 1
+        _h_mix = {k: v / _h_mix_sum * 100 for k, v in _h_mix_raw.items()}
+        st.caption(
+            "Effektiv fordeling: "
+            + " / ".join(f"{_h_mix[k]:.0f}%" for k in _h_mix)
+        )
+
+    # ── Compute weighted per-order economics ──────────────────
+    _h_price_adj = 1 + _h_price_factor / 100
+    _h_adj_prices = {lbl: prices[lbl] * _h_price_adj for lbl in SUBSCRIPTIONS}
+
+    _h_weighted_price = sum(
+        _h_adj_prices[lbl] * (_h_mix[lbl] / 100) for lbl in SUBSCRIPTIONS
+    )
+    _h_weighted_cogs = sum(
+        avg_slot_cogs * SUBSCRIPTIONS[lbl]["slots"] * (_h_mix[lbl] / 100)
+        for lbl in SUBSCRIPTIONS
+    )
+    _h_weighted_fpacks = sum(
+        avg_slot_fpacks * SUBSCRIPTIONS[lbl]["slots"] * (_h_mix[lbl] / 100)
+        for lbl in SUBSCRIPTIONS
+    )
+
+    _h_rev_ex_mva = _h_weighted_price / (1 + MVA_RATE)
+    _h_ops = (
+        lager_fast
+        + lager_var * _h_weighted_fpacks
+        + distribusjon
+        + emballasje
+        + _h_weighted_price * (shopify_var_pct / 100)
+        + shopify_fast
+        + _h_weighted_price * (skio_var_pct / 100)
+        + skio_fast
+    )
+    _h_margin_per_order = _h_rev_ex_mva - _h_weighted_cogs - _h_ops
+    _h_margin_per_sub_month = _h_margin_per_order * _h_deliveries
+
+    # LTV & CAC
+    _h_churn_rate = _h_churn / 100
+    _h_avg_lifetime = (1 / _h_churn_rate) if _h_churn_rate > 0 else float("inf")
+    _h_ltv = (
+        _h_margin_per_sub_month * _h_avg_lifetime
+        if _h_churn_rate > 0
+        else float("inf")
+    )
+    _h_ltv_cac = _h_ltv / _h_cac if _h_cac > 0 else float("inf")
+    _h_payback = (
+        _h_cac / _h_margin_per_sub_month
+        if _h_margin_per_sub_month > 0
+        else float("inf")
+    )
+
+    # ── Key metrics row ───────────────────────────────────────
+    st.divider()
+    _m_cols = st.columns(6)
+    _m_cols[0].metric("Snitt pris/ordre", f"{_h_weighted_price:,.0f} kr")
+    _m_cols[1].metric("Margin/ordre", f"{_h_margin_per_order:,.0f} kr")
+    _m_cols[2].metric(
+        "Margin/abb/mnd", f"{_h_margin_per_sub_month:,.0f} kr"
+    )
+    _m_cols[3].metric(
+        "LTV", f"{_h_ltv:,.0f} kr" if _h_ltv < 1e8 else "∞"
+    )
+    _m_cols[4].metric(
+        "LTV / CAC",
+        f"{_h_ltv_cac:.1f}x" if _h_ltv_cac < 1e6 else "∞",
+    )
+    _m_cols[5].metric(
+        "Payback",
+        f"{_h_payback:.1f} mnd" if _h_payback < 1e6 else "N/A",
+    )
+
+    # ── Per-order waterfall ───────────────────────────────────
+    with st.expander("💰 Økonomi per ordre (gjennomsnittlig boks)"):
+        _wf_mva = _h_weighted_price - _h_rev_ex_mva
+        _wf_fig = go.Figure()
+        _wf_fig.add_trace(
+            go.Waterfall(
+                x=[
+                    "Omsetning inkl. MVA",
+                    "MVA (15%)",
+                    "Omsetning eks. MVA",
+                    "Varekostnad",
+                    "Driftskostnader",
+                    "Margin",
+                ],
+                y=[
+                    _h_weighted_price,
+                    -_wf_mva,
+                    _h_rev_ex_mva,
+                    -_h_weighted_cogs,
+                    -_h_ops,
+                    _h_margin_per_order,
+                ],
+                measure=[
+                    "absolute",
+                    "relative",
+                    "total",
+                    "relative",
+                    "relative",
+                    "total",
+                ],
+                connector=dict(line=dict(color="rgba(0,0,0,0)")),
+                increasing=dict(marker=dict(color="#27ae60")),
+                decreasing=dict(marker=dict(color="#e74c3c")),
+                totals=dict(marker=dict(color="#3498db")),
+                text=[
+                    f"{_h_weighted_price:,.0f}",
+                    f"-{_wf_mva:,.0f}",
+                    f"{_h_rev_ex_mva:,.0f}",
+                    f"-{_h_weighted_cogs:,.0f}",
+                    f"-{_h_ops:,.0f}",
+                    f"{_h_margin_per_order:,.0f}",
+                ],
+                textposition="outside",
+            )
+        )
+        _wf_fig.update_layout(
+            title="Økonomi per ordre",
+            yaxis_title="kr",
+            height=350,
+            margin=dict(t=40, b=30),
+            showlegend=False,
+        )
+        st.plotly_chart(_wf_fig, use_container_width=True)
+
+    # ── Monthly projection ────────────────────────────────────
+    st.divider()
+    _h_growth_rate = _h_monthly_growth / 100
+    _proj_rows: list[dict] = []
+    _subs = float(_h_start_subs)
+    _cumulative_pl = 0.0
+
+    for _m in range(1, _h_months + 1):
+        _new = _subs * _h_growth_rate
+        _churned = _subs * _h_churn_rate
+        _end_subs = _subs + _new - _churned
+        _avg_subs = (_subs + _end_subs) / 2
+
+        _orders = _avg_subs * _h_deliveries
+        _m_revenue = _orders * _h_weighted_price
+        _m_revenue_ex = _orders * _h_rev_ex_mva
+        _m_cogs = _orders * _h_weighted_cogs
+        _m_ops = _orders * _h_ops
+        _m_cac_spend = _new * _h_cac
+        _m_gross_margin = _m_revenue_ex - _m_cogs
+        _m_operating = _m_gross_margin - _m_ops
+        _m_net = _m_operating - _m_cac_spend
+        _cumulative_pl += _m_net
+
+        _proj_rows.append(
+            {
+                "Måned": _m,
+                "Abonnenter": round(_end_subs),
+                "Nye": round(_new),
+                "Churnet": round(_churned),
+                "Ordrer": round(_orders),
+                "Omsetning inkl. MVA": round(_m_revenue),
+                "Omsetning eks. MVA": round(_m_revenue_ex),
+                "Varekostnad": round(_m_cogs),
+                "Driftskostnader": round(_m_ops),
+                "CAC-kostnad": round(_m_cac_spend),
+                "Bruttoresultat": round(_m_gross_margin),
+                "Driftsresultat": round(_m_operating),
+                "Nettoresultat": round(_m_net),
+                "Kumulativt resultat": round(_cumulative_pl),
+            }
+        )
+        _subs = _end_subs
+
+    _proj_df = pd.DataFrame(_proj_rows)
+
+    # Break-even detection
+    _be_month = None
+    _cum_vals = _proj_df["Kumulativt resultat"].values
+    for _i in range(1, len(_cum_vals)):
+        if _cum_vals[_i - 1] < 0 and _cum_vals[_i] >= 0:
+            _be_month = int(_proj_df.loc[_i, "Måned"])
+            break
+
+    # ── Charts row 1: subscribers & revenue ────────────────────
+    st.subheader("Vekstprognose")
+    if _be_month:
+        st.success(f"📈 Break-even i måned {_be_month}")
+    elif _cum_vals[-1] < 0:
+        st.warning("⚠️ Ingen break-even innen tidshorisonten")
+
+    _chart_cols = st.columns(2)
+
+    with _chart_cols[0]:
+        fig_subs = go.Figure()
+        fig_subs.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["Abonnenter"],
+                mode="lines",
+                name="Aktive abonnenter",
+                line=dict(color="#27ae60", width=2.5),
+                fill="tozeroy",
+                fillcolor="rgba(39,174,96,0.1)",
+            )
+        )
+        fig_subs.add_trace(
+            go.Bar(
+                x=_proj_df["Måned"],
+                y=_proj_df["Nye"],
+                name="Nye",
+                marker_color="rgba(52,152,219,0.5)",
+            )
+        )
+        fig_subs.add_trace(
+            go.Bar(
+                x=_proj_df["Måned"],
+                y=-_proj_df["Churnet"],
+                name="Churnet",
+                marker_color="rgba(231,76,60,0.5)",
+            )
+        )
+        fig_subs.update_layout(
+            title="Abonnentutvikling",
+            xaxis_title="Måned",
+            yaxis_title="Antall",
+            height=400,
+            margin=dict(t=40, b=30),
+            barmode="relative",
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+            ),
+        )
+        st.plotly_chart(fig_subs, use_container_width=True)
+
+    with _chart_cols[1]:
+        fig_rev = go.Figure()
+        fig_rev.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["Omsetning eks. MVA"],
+                mode="lines",
+                name="Omsetning eks. MVA",
+                line=dict(color="#27ae60", width=2),
+            )
+        )
+        fig_rev.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["Varekostnad"],
+                mode="lines",
+                name="Varekostnad",
+                line=dict(color="#e74c3c", width=2),
+            )
+        )
+        fig_rev.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["Driftskostnader"],
+                mode="lines",
+                name="Driftskostnader",
+                line=dict(color="#f39c12", width=2),
+            )
+        )
+        fig_rev.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["CAC-kostnad"],
+                mode="lines",
+                name="CAC-kostnad",
+                line=dict(color="#9b59b6", width=2),
+            )
+        )
+        fig_rev.update_layout(
+            title="Inntekter vs. kostnader",
+            xaxis_title="Måned",
+            yaxis_title="kr",
+            height=400,
+            margin=dict(t=40, b=30),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+            ),
+        )
+        st.plotly_chart(fig_rev, use_container_width=True)
+
+    # ── Charts row 2: monthly P&L & cumulative ────────────────
+    _pl_cols = st.columns(2)
+
+    with _pl_cols[0]:
+        _net_colors = [
+            "#27ae60" if v >= 0 else "#e74c3c"
+            for v in _proj_df["Nettoresultat"]
+        ]
+        fig_pl = go.Figure()
+        fig_pl.add_trace(
+            go.Bar(
+                x=_proj_df["Måned"],
+                y=_proj_df["Nettoresultat"],
+                name="Nettoresultat",
+                marker_color=_net_colors,
+            )
+        )
+        fig_pl.add_hline(y=0, line_dash="dash", line_color="gray")
+        fig_pl.update_layout(
+            title="Månedlig nettoresultat (etter CAC)",
+            xaxis_title="Måned",
+            yaxis_title="kr",
+            height=400,
+            margin=dict(t=40, b=30),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_pl, use_container_width=True)
+
+    with _pl_cols[1]:
+        fig_cum = go.Figure()
+        fig_cum.add_trace(
+            go.Scatter(
+                x=_proj_df["Måned"],
+                y=_proj_df["Kumulativt resultat"],
+                mode="lines",
+                name="Kumulativt resultat",
+                line=dict(color="#3498db", width=2.5),
+                fill="tozeroy",
+            )
+        )
+        if _be_month:
+            fig_cum.add_vline(
+                x=_be_month,
+                line_dash="dash",
+                line_color="#27ae60",
+                annotation_text=f"Break-even (mnd {_be_month})",
+                annotation_position="top",
+            )
+        fig_cum.add_hline(y=0, line_dash="dash", line_color="gray")
+        fig_cum.update_layout(
+            title="Kumulativt resultat",
+            xaxis_title="Måned",
+            yaxis_title="kr",
+            height=400,
+            margin=dict(t=40, b=30),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_cum, use_container_width=True)
+
+    # ── Stacked cost breakdown over time ──────────────────────
+    st.subheader("Kostnadsfordeling over tid")
+    fig_stack = go.Figure()
+    fig_stack.add_trace(
+        go.Scatter(
+            x=_proj_df["Måned"],
+            y=_proj_df["Varekostnad"],
+            mode="lines",
+            name="Varekostnad",
+            stackgroup="costs",
+            line=dict(color="#e74c3c"),
+        )
+    )
+    fig_stack.add_trace(
+        go.Scatter(
+            x=_proj_df["Måned"],
+            y=_proj_df["Driftskostnader"],
+            mode="lines",
+            name="Driftskostnader",
+            stackgroup="costs",
+            line=dict(color="#f39c12"),
+        )
+    )
+    fig_stack.add_trace(
+        go.Scatter(
+            x=_proj_df["Måned"],
+            y=_proj_df["CAC-kostnad"],
+            mode="lines",
+            name="CAC-kostnad",
+            stackgroup="costs",
+            line=dict(color="#9b59b6"),
+        )
+    )
+    fig_stack.add_trace(
+        go.Scatter(
+            x=_proj_df["Måned"],
+            y=_proj_df["Omsetning eks. MVA"],
+            mode="lines",
+            name="Omsetning eks. MVA",
+            line=dict(color="#27ae60", width=2.5, dash="dot"),
+        )
+    )
+    fig_stack.update_layout(
+        xaxis_title="Måned",
+        yaxis_title="kr",
+        height=400,
+        margin=dict(t=40, b=30),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+        ),
+    )
+    st.plotly_chart(fig_stack, use_container_width=True)
+
+    # ── Year-end summary ──────────────────────────────────────
+    st.subheader("Årssammendrag")
+    _proj_df["År"] = ((_proj_df["Måned"] - 1) // 12) + 1
+    _yearly = (
+        _proj_df.groupby("År")
+        .agg(
+            {
+                "Abonnenter": "last",
+                "Nye": "sum",
+                "Churnet": "sum",
+                "Ordrer": "sum",
+                "Omsetning inkl. MVA": "sum",
+                "Omsetning eks. MVA": "sum",
+                "Varekostnad": "sum",
+                "Driftskostnader": "sum",
+                "CAC-kostnad": "sum",
+                "Nettoresultat": "sum",
+                "Kumulativt resultat": "last",
+            }
+        )
+        .reset_index()
+    )
+    _yearly_fmt = _yearly.copy()
+    for _c in _yearly_fmt.columns:
+        if _c != "År":
+            _yearly_fmt[_c] = _yearly_fmt[_c].apply(lambda v: f"{v:,.0f}")
+    st.dataframe(_yearly_fmt, use_container_width=True, hide_index=True)
+
+    # ── Detailed monthly table ────────────────────────────────
+    with st.expander("📊 Detaljert månedlig prognose"):
+        _fmt_cols = [
+            c
+            for c in _proj_df.columns
+            if c
+            not in ("Måned", "Abonnenter", "Nye", "Churnet", "Ordrer", "År")
+        ]
+        _display_proj = _proj_df.drop(columns=["År"], errors="ignore").copy()
+        for _c in _fmt_cols:
+            _display_proj[_c] = _display_proj[_c].apply(
+                lambda v: f"{v:,.0f}"
+            )
+        st.dataframe(
+            _display_proj, use_container_width=True, hide_index=True
+        )

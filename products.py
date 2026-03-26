@@ -34,6 +34,7 @@ class Product:
     )
     shopify_visible: bool = False  # True if listed on Shopify storefront
     innpris_per_kg: float | None = None  # Innpris from Notion (kr/kg)
+    espen_n_units: int | None = None  # Forced n_units from "Espen - antall enheter" (when Fri fpack vekt = 0)
 
     @property
     def purchase_price_per_kg(self) -> float:

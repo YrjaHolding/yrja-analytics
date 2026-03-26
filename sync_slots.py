@@ -32,6 +32,16 @@ from notion_sync import fetch_rows_from_notion, write_slot_results, NotionRow
 from optimize_weights import solve
 
 
+def _apply_forced_units(results: dict, rows: list[NotionRow]) -> None:
+    """Override n_units with Espen's values for products with Fri fpack vekt = 0."""
+    for r in rows:
+        p = r.product
+        if p.espen_n_units is not None and p.name in results:
+            slot = results[p.name]
+            slot["n_units"] = p.espen_n_units
+            slot["total_weight"] = p.espen_n_units * p.f_pack_weight_kg
+
+
 def _fingerprint(rows: list[NotionRow]) -> str:
     """Hash the pricing/weight fields that affect optimization.
 
@@ -46,6 +56,7 @@ def _fingerprint(rows: list[NotionRow]) -> str:
             "f_pack": p.f_pack_weight_kg,
             "shopify": p.shopify_visible,
             "adjustable": p.adjustable_size,
+            "espen_n_units": p.espen_n_units,
         })
     data.sort(key=lambda d: d["name"])
     return hashlib.sha256(json.dumps(data).encode()).hexdigest()[:16]
@@ -86,6 +97,8 @@ def run_sync(quiet: bool = False) -> bool:
         }
         for name, s in output.slots.items()
     }
+
+    _apply_forced_units(results, rows)
 
     if not quiet:
         print("📤  Writing SLOT columns to Notion...")
@@ -132,6 +145,7 @@ def watch(interval: int = 30) -> None:
                             }
                             for name, s in output.slots.items()
                         }
+                        _apply_forced_units(results, rows)
                         updated = write_slot_results(results, rows)
                         print(
                             f"    ✅ {updated} products updated | "

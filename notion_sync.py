@@ -121,6 +121,7 @@ def _row_to_product(row: dict) -> NotionRow | None:
     image_url = _get_url(props, "Bilde URL")
     shopify = _get_select(props, "Shopify public")
     fri_fpack = _get_select(props, "Fri fpack vekt")
+    espen_antall = _get_number(props, "Espen - antall enheter")
 
     # Derive weight: f-pack → stykkpris/utpris → default
     if f_pack and f_pack > 0:
@@ -157,6 +158,7 @@ def _row_to_product(row: dict) -> NotionRow | None:
         adjustable_size=is_adjustable,
         shopify_visible=(shopify == "Ja"),
         innpris_per_kg=innpris if innpris and innpris > 0 else None,
+        espen_n_units=int(espen_antall) if fri_fpack == "0" and espen_antall and espen_antall > 0 else None,
     )
     return NotionRow(product=product, page_id=page_id)
 
