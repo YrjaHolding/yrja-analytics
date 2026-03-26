@@ -1,5 +1,6 @@
 """Yrja Financial Dashboard — box subscription simulator."""
 
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -67,6 +68,20 @@ def safe_float(value, field_name: str = "") -> float | None:
 st.set_page_config(
     page_title="Yrja Finansdashboard", page_icon="📦", layout="wide"
 )
+
+# ── Password gate ──────────────────────────────────────────────────────
+_APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+
+if _APP_PASSWORD and not st.session_state.get("authenticated"):
+    st.title("🔒 Yrja Finansdashboard")
+    password = st.text_input("Passord", type="password")
+    if st.button("Logg inn", type="primary"):
+        if password == _APP_PASSWORD:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Feil passord.")
+    st.stop()
 
 
 st.title("📦 Yrja Finansdashboard")
