@@ -7,6 +7,7 @@ import numpy as np
 import requests
 import random
 import logging
+from datetime import date, timedelta
 from math import comb
 
 import plotly.express as px
@@ -24,6 +25,7 @@ from shopify_client import (
     ShopifyClient,
     VariantMetafields,
     has_shopify_credentials,
+    Order,
 )
 
 logger = logging.getLogger(__name__)
@@ -150,6 +152,12 @@ def fetch_product_table() -> pd.DataFrame:
                 "ODA pris/kg": _get_number(props, "ODA pris/kg"),
                 "AMOI pris/kg": _get_number(props, "AMOI pris/kg "),
                 "Shopify Variant ID": _get_number(props, "Shopify Variant ID"),
+                "FID per Kolli": safe_float(
+                    _get_number(props, "FID per Kolli"), "FID per Kolli"
+                ),
+                "Max kolli": safe_float(
+                    _get_number(props, "Max kolli "), "Max kolli"
+                ),
             }
         )
 
@@ -196,6 +204,42 @@ def fetch_shopify_metafields() -> dict[str, dict]:
         client.close()
 
 
+@st.cache_data(ttl=300, show_spinner="Henter ordrer fra Shopify …")
+def fetch_shopify_orders(
+    query: str | None = None, limit: int = 500,
+) -> list[dict]:
+    """Fetch Shopify orders as serialisable dicts for Streamlit caching."""
+    if not _shopify_available:
+        return []
+    client = ShopifyClient()
+    try:
+        orders = client.fetch_recent_orders(
+            limit=limit, query=query, include_customer=False,
+        )
+        return [
+            {
+                "order_id": o.order_id,
+                "name": o.name,
+                "created_at": o.created_at,
+                "total_price": o.total_price,
+                "line_items": [
+                    {
+                        "title": li.title,
+                        "quantity": li.quantity,
+                        "custom_attributes": li.custom_attributes,
+                    }
+                    for li in o.line_items
+                ],
+            }
+            for o in orders
+        ]
+    except Exception as e:
+        logger.warning("Shopify order fetch failed: %s", e)
+        return []
+    finally:
+        client.close()
+
+
 def enrich_with_shopify(df: pd.DataFrame) -> pd.DataFrame:
     """Add Shopify metafield columns to the product DataFrame."""
     shopify_data = fetch_shopify_metafields()
@@ -206,6 +250,7 @@ def enrich_with_shopify(df: pd.DataFrame) -> pd.DataFrame:
         df["S: antall enheter"] = np.nan
         df["S: f-pack kg"] = np.nan
         df["SKU Name"] = ""
+        df["Slot kg (Shopify)"] = np.nan
         return df
 
     pris_kg = []
@@ -710,8 +755,8 @@ else:
 #  TABS
 # ══════════════════════════════════════════════════════════════════════
 
-tab_dashboard, tab_analyse, tab_benchmark, tab_health = st.tabs(
-    ["📦 Dashboard", "📊 Unit Economics", "📈 Pris benchmarking", "🏥 Forretningshelse"]
+tab_dashboard, tab_analyse, tab_benchmark, tab_health, tab_orders = st.tabs(
+    ["📦 Dashboard", "📊 Unit Economics", "📈 Pris benchmarking", "🏥 Forretningshelse", "🛒 Ordrestatus"]
 )
 
 
@@ -726,6 +771,22 @@ with tab_dashboard:
         f"{len(df)} produkter lastet fra Notion"
         + (f" · {_n_matched} med Shopify-prisdata" if _shopify_meta else "")
     )
+
+    # ── Per-slot statistics for box-level aggregation ────────
+    _portions_series = df["Porsjoner"].dropna()
+    _portions_label = "Porsjoner"
+    if len(_portions_series) == 0:
+        _portions_series = df["SLOT: antall enheter"].dropna()
+        _portions_label = "Antall enheter"
+    _slot_wt_series = df["SLOT: tot slot vekt"].dropna()
+
+    _has_portions = len(_portions_series) > 0
+    _has_weight = len(_slot_wt_series) > 0
+    _slot_port_mean = _portions_series.mean() if _has_portions else 0.0
+    _slot_port_std = _portions_series.std() if _has_portions else 0.0
+    _slot_wt_mean = _slot_wt_series.mean() if _has_weight else 0.0
+    _slot_wt_std = _slot_wt_series.std() if _has_weight else 0.0
+
     if _shopify_meta:
         with st.expander("🔍 Shopify metafelter (debug)"):
             all_keys: set[str] = set()
@@ -757,6 +818,20 @@ with tab_dashboard:
             n_slots = sub["slots"]
             st.metric(label, f"{price:,} kr")
             st.caption(f"{n_slots} valgfrie produktslots")
+
+            # Box-level portions & weight (sum of n_slots independent draws)
+            if _has_portions:
+                _box_port_mean = n_slots * _slot_port_mean
+                _box_port_std = np.sqrt(n_slots) * _slot_port_std
+                st.caption(
+                    f"{_portions_label}: **{_box_port_mean:.1f}** ± {_box_port_std:.1f}"
+                )
+            if _has_weight:
+                _box_wt_mean = n_slots * _slot_wt_mean
+                _box_wt_std = np.sqrt(n_slots) * _slot_wt_std
+                st.caption(
+                    f"Vekt: **{_box_wt_mean:.2f}** ± {_box_wt_std:.2f} kg"
+                )
 
             n_combos = comb(len(df) + n_slots - 1, n_slots)
             st.write(f"_{n_combos:,} mulige kombinasjoner_")
@@ -906,12 +981,12 @@ SHOPIFY_CHART_METRICS = [
     ("Boks porsjoner", "Boks porsjoner — sum porsjoner per slot"),
 ]
 
-with tab_analyse:
+def _render_tab_analyse():
     if len(df_sim) == 0:
         st.warning(
             "Ingen produkter med komplett data (Innpris + SLOT-kolonner)."
         )
-        st.stop()
+        return
 
     # ── Subscription selector ─────────────────────────────────
     sub_label = st.selectbox("Velg abonnement", list(SUBSCRIPTIONS.keys()))
@@ -965,7 +1040,7 @@ with tab_analyse:
     # ── Results ───────────────────────────────────────────────
     if results_key not in st.session_state:
         st.info("Velg slotlåsing og klikk **Kjør simulering**.")
-        st.stop()
+        return
 
     result = st.session_state[results_key]
     results_df: pd.DataFrame = result["metrics"]
@@ -1282,12 +1357,16 @@ with tab_analyse:
                 )
 
 
-# ── Tab 3: Pris benchmarking ────────────────────────────────────────
+with tab_analyse:
+    _render_tab_analyse()
 
-with tab_benchmark:
+
+# ── Tab 3: Pris benchmarking
+
+def _render_tab_benchmark():
     if not _shopify_available:
         st.warning("Shopify ikke konfigurert — sett SHOPIFY_SHOP_DOMAIN og SHOPIFY_ACCESS_TOKEN i .env")
-        st.stop()
+        return
 
     # ── Yrja pricing controls ─────────────────────────────
     _DELIVERY_COST = 149.0
@@ -1448,7 +1527,7 @@ with tab_benchmark:
 
     if _b_key not in st.session_state:
         st.info("Klikk **Kjør benchmark-simulering** for å starte.")
-        st.stop()
+        return
 
     _b_res = st.session_state[_b_key]
 
@@ -1557,7 +1636,7 @@ with tab_benchmark:
     st.subheader("Utforsk enkeltbokser")
     if _sim_all is None or len(_pool_all_three) == 0:
         st.info("Ingen produkter med alle tre priskilder.")
-        st.stop()
+        return
 
     _ex_picks = _sim_all["picks"]
     _ex_n = _ex_picks.shape[0]
@@ -1610,16 +1689,20 @@ with tab_benchmark:
     st.dataframe(_box_detail_df, use_container_width=True, hide_index=True)
 
 
-# ── Tab 4: Forretningshelse ──────────────────────────────────────────
+with tab_benchmark:
+    _render_tab_benchmark()
 
-with tab_health:
+
+# ── Tab 4: Forretningshelse
+
+def _render_tab_health():
     st.warning("🚧 **WORK IN PROGRESS** — Denne fanen er under utvikling og tallene er ikke verifisert.")
 
     if len(df_sim) == 0:
         st.warning(
             "Ingen produkter med komplett data (Innpris + SLOT-kolonner)."
         )
-        st.stop()
+        return
 
     st.subheader("Forretningsmodell & vekstprognose")
     st.caption(
@@ -2160,3 +2243,187 @@ with tab_health:
         st.dataframe(
             _display_proj, use_container_width=True, hide_index=True
         )
+
+
+with tab_health:
+    _render_tab_health()
+
+
+# ── Tab 5: Ordrestatus
+
+def _render_tab_orders():
+    if not _shopify_available:
+        st.warning("Shopify ikke konfigurert — kan ikke hente ordrer.")
+        return
+
+    st.subheader("Ordrestatus — solgt vs. kapasitet")
+    st.caption(
+        "Sammenligner antall bestilte enheter fra Shopify mot "
+        "tilgjengelig kapasitet (FID per Kolli × Max kolli) fra Notion."
+    )
+
+    # ── Filters ────────────────────────────────────────────────
+    _o_col1, _o_col2, _o_col3 = st.columns(3)
+    with _o_col1:
+        _o_from = st.date_input(
+            "Fra dato",
+            value=date.today() - timedelta(days=30),
+            key="order_from",
+        )
+    with _o_col2:
+        _o_to = st.date_input("Til dato", value=date.today(), key="order_to")
+    with _o_col3:
+        _o_limit = st.number_input(
+            "Maks antall ordrer", value=500, min_value=10, step=50, key="order_limit",
+        )
+
+    # Build Shopify query filter from date range
+    _o_query_parts: list[str] = ["tag_not:Test"]
+    if _o_from:
+        _o_query_parts.append(f"created_at:>={_o_from.isoformat()}")
+    if _o_to:
+        _o_query_parts.append(f"created_at:<={_o_to.isoformat()}")
+    _o_query = " ".join(_o_query_parts)
+
+    # ── Fetch orders ──────────────────────────────────────────
+    _raw_orders = fetch_shopify_orders(query=_o_query, limit=_o_limit)
+
+    if not _raw_orders:
+        st.info("Ingen ordrer funnet for valgt periode.")
+        return
+
+    # ── Build Shopify title → Notion Produktnavn mapping ──────
+    _shopify_meta = fetch_shopify_metafields()
+    _vid_to_notion: dict[str, str] = {}
+    for _, _row in df.iterrows():
+        _vid = _row.get("Shopify Variant ID")
+        if pd.notna(_vid):
+            _vid_to_notion[str(int(_vid))] = _row["Produktnavn"]
+
+    _title_to_notion: dict[str, str] = {}
+    for _vid, _entry in _shopify_meta.items():
+        _notion_name = _vid_to_notion.get(_vid)
+        if _notion_name:
+            _title_to_notion[_entry["shopify_title"]] = _notion_name
+
+    # ── Aggregate line items by product ───────────────────────
+    # Bundle products (Råvareboks/Yrjaboks) store the actual picks in
+    # customAttributes with keys like "_pvgid://shopify/ProductVariant/ID".
+    _BUNDLE_TITLES = {"Råvareboks", "Yrjaboks"}
+    _EXCLUDED_TITLES = {"Testvare"}
+    _PVGID_PREFIX = "_pvgid://shopify/ProductVariant/"
+
+    _product_qty: dict[str, int] = {}
+    for _order in _raw_orders:
+        for _li in _order["line_items"]:
+            if _li["title"] in _EXCLUDED_TITLES:
+                continue
+
+            attrs = _li.get("custom_attributes") or {}
+
+            if _li["title"] in _BUNDLE_TITLES:
+                # Parse bundle custom attributes for variant-level picks
+                for _attr_key, _attr_val in attrs.items():
+                    if _attr_key.startswith(_PVGID_PREFIX):
+                        _vid = _attr_key[len(_PVGID_PREFIX):]
+                        _qty = int(_attr_val) if _attr_val.isdigit() else 1
+                        _notion_name = _vid_to_notion.get(_vid, f"Variant {_vid}")
+                        _product_qty[_notion_name] = _product_qty.get(_notion_name, 0) + _qty
+            else:
+                # Regular line item (non-bundle)
+                _mapped = _title_to_notion.get(_li["title"], _li["title"])
+                _product_qty[_mapped] = _product_qty.get(_mapped, 0) + _li["quantity"]
+
+    # ── Join with product table (FID per Kolli, Max kolli) ────
+    _capacity_map: dict[str, float] = {}
+    for _, _row in df.iterrows():
+        _fid = _row.get("FID per Kolli")
+        _kolli = _row.get("Max kolli")
+        if pd.notna(_fid) and pd.notna(_kolli) and _fid > 0 and _kolli > 0:
+            _capacity_map[_row["Produktnavn"]] = _fid * _kolli
+
+    _status_rows: list[dict] = []
+    for _prod, _qty in sorted(_product_qty.items(), key=lambda x: -x[1]):
+        _cap = _capacity_map.get(_prod)
+        _pct = (_qty / _cap * 100) if _cap else None
+        if _pct is not None:
+            if _pct >= 100:
+                _status = "🔴 Utsolgt"
+            elif _pct >= 80:
+                _status = "🟡 Snart utsolgt"
+            else:
+                _status = "🟢 På lager"
+        else:
+            _status = "⚪ Ukjent kapasitet"
+        _status_rows.append({
+            "Produkt": _prod,
+            "Bestilt": _qty,
+            "Kapasitet": int(_cap) if _cap else None,
+            "Utnyttelse (%)": round(_pct, 1) if _pct is not None else None,
+            "Status": _status,
+        })
+
+    _status_df = pd.DataFrame(_status_rows)
+
+    # ── Key metrics ───────────────────────────────────────────
+    _total_orders = len(_raw_orders)
+    _total_units = sum(_product_qty.values())
+    _matched = sum(1 for r in _status_rows if r["Kapasitet"] is not None)
+    _sold_out = sum(1 for r in _status_rows if r["Status"] == "🔴 Utsolgt")
+
+    _m_cols = st.columns(4)
+    _m_cols[0].metric("Ordrer", f"{_total_orders:,}")
+    _m_cols[1].metric("Enheter bestilt", f"{_total_units:,}")
+    _m_cols[2].metric("Produkter matchet", f"{_matched} / {len(_status_rows)}")
+    _m_cols[3].metric("Utsolgt", f"{_sold_out}")
+
+    # ── Table ─────────────────────────────────────────────────
+    st.dataframe(_status_df, use_container_width=True, hide_index=True)
+
+    # ── Bar chart: sell-through per product ────────────────────
+    _chart_df = _status_df.dropna(subset=["Utnyttelse (%)"]).sort_values(
+        "Utnyttelse (%)", ascending=True
+    )
+    if len(_chart_df) > 0:
+        _bar_colors = [
+            "#e74c3c" if p >= 100 else "#f39c12" if p >= 80 else "#27ae60"
+            for p in _chart_df["Utnyttelse (%)"]
+        ]
+        _fig_bar = go.Figure()
+        _fig_bar.add_trace(
+            go.Bar(
+                y=_chart_df["Produkt"],
+                x=_chart_df["Utnyttelse (%)"],
+                orientation="h",
+                marker_color=_bar_colors,
+                text=_chart_df["Utnyttelse (%)"].apply(lambda v: f"{v:.0f}%"),
+                textposition="outside",
+            )
+        )
+        _fig_bar.add_vline(x=100, line_dash="dash", line_color="red")
+        _fig_bar.update_layout(
+            title="Utnyttelse per produkt",
+            xaxis_title="Utnyttelse (%)",
+            height=max(400, len(_chart_df) * 28),
+            margin=dict(t=40, b=30, l=200),
+            showlegend=False,
+        )
+        st.plotly_chart(_fig_bar, use_container_width=True)
+
+    # ── Unmatched products ────────────────────────────────────
+    _unmatched = _status_df[_status_df["Kapasitet"].isna()]
+    if len(_unmatched) > 0:
+        with st.expander(f"⚠️ {len(_unmatched)} produkter uten kapasitetsdata"):
+            st.dataframe(
+                _unmatched[["Produkt", "Bestilt"]],
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(
+                "Disse produktene fra Shopify-ordrer ble ikke matchet mot "
+                "Notion-produkter med FID per Kolli / Max kolli."
+            )
+
+
+with tab_orders:
+    _render_tab_orders()

@@ -26,6 +26,75 @@ PAGE_SIZE = 50
 
 # ── GraphQL queries ──────────────────────────────────────────────────────
 
+SHOP_METAFIELD_QUERY = """
+query ShopMetafield($namespace: String!, $key: String!) {
+  shop {
+    id
+    metafield(namespace: $namespace, key: $key) {
+      id
+      value
+    }
+  }
+}
+"""
+
+RECENT_ORDERS_QUERY = """
+query RecentOrders($first: Int!, $after: String, $query: String) {
+  orders(first: $first, after: $after, query: $query, sortKey: CREATED_AT, reverse: true) {
+    pageInfo { hasNextPage endCursor }
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet { shopMoney { amount currencyCode } }
+        customer {
+          id
+          displayName
+          email
+          numberOfOrders
+        }
+        lineItems(first: 50) {
+          edges {
+            node {
+              title
+              quantity
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+# Same query but without customer fields (no read_customers scope needed).
+# Includes customAttributes on line items to extract bundle/box product picks.
+RECENT_ORDERS_BASIC_QUERY = """
+query RecentOrdersBasic($first: Int!, $after: String, $query: String) {
+  orders(first: $first, after: $after, query: $query, sortKey: CREATED_AT, reverse: true) {
+    pageInfo { hasNextPage endCursor }
+    edges {
+      node {
+        id
+        name
+        createdAt
+        totalPriceSet { shopMoney { amount currencyCode } }
+        lineItems(first: 50) {
+          edges {
+            node {
+              title
+              quantity
+              customAttributes { key value }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
 PRODUCTS_WITH_METAFIELDS_QUERY = """
 query ProductsWithMetafields($first: Int!, $after: String) {
   products(first: $first, after: $after) {
@@ -120,6 +189,32 @@ class VariantMetafields:
     def slot_fpack_kg(self) -> float | None:
         """SLOT: f-pack weight in kg."""
         return self.get_float("slot_fpack_kg")
+
+
+@dataclass
+class OrderLineItem:
+    """A single line item in an order."""
+    title: str
+    quantity: int
+    custom_attributes: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class Order:
+    """A Shopify order with customer info."""
+    order_id: str
+    name: str  # e.g. "#1042"
+    created_at: str
+    total_price: float
+    currency: str
+    customer_name: str | None
+    customer_email: str | None
+    customer_order_count: int
+    line_items: list[OrderLineItem] = field(default_factory=list)
+
+    @property
+    def is_new_customer(self) -> bool:
+        return self.customer_order_count == 1
 
 
 # ── Client ───────────────────────────────────────────────────────────────
@@ -231,6 +326,87 @@ class ShopifyClient:
             cursor = page_info["endCursor"]
 
         return result
+
+    def get_shop_metafield(self, namespace: str, key: str) -> tuple[str, str | None]:
+        """Read a metafield from the Shop object.
+
+        Returns (shop_id, value) where value is None if the metafield doesn't exist.
+        """
+        data = self._execute(SHOP_METAFIELD_QUERY, {"namespace": namespace, "key": key})
+        shop_id = data["shop"]["id"]
+        mf = data["shop"].get("metafield")
+        return shop_id, mf["value"] if mf else None
+
+    def fetch_recent_orders(
+        self,
+        limit: int = 100,
+        query: str | None = None,
+        include_customer: bool = True,
+    ) -> list[Order]:
+        """Fetch the most recent orders.
+
+        Args:
+            limit: Maximum number of orders to fetch.
+            query: Optional Shopify query filter, e.g. ``"created_at:>2026-04-01"``.
+            include_customer: If False, use a query that doesn't require
+                ``read_customers`` scope (customer fields will be empty).
+
+        Returns a list of Order objects, newest first.
+        Requires `read_orders` scope on the Shopify app.
+        """
+        gql = RECENT_ORDERS_QUERY if include_customer else RECENT_ORDERS_BASIC_QUERY
+        orders: list[Order] = []
+        cursor: str | None = None
+        remaining = limit
+
+        while remaining > 0:
+            page_size = min(remaining, PAGE_SIZE)
+            variables: dict[str, Any] = {"first": page_size}
+            if cursor:
+                variables["after"] = cursor
+            if query:
+                variables["query"] = query
+
+            data = self._execute(gql, variables)
+            connection = data["orders"]
+
+            for edge in connection["edges"]:
+                node = edge["node"]
+                customer = node.get("customer") or {}
+                money = node["totalPriceSet"]["shopMoney"]
+
+                line_items = []
+                for li in node.get("lineItems", {}).get("edges", []):
+                    li_node = li["node"]
+                    attrs = {
+                        a["key"]: a["value"]
+                        for a in (li_node.get("customAttributes") or [])
+                    }
+                    line_items.append(OrderLineItem(
+                        title=li_node["title"],
+                        quantity=li_node["quantity"],
+                        custom_attributes=attrs,
+                    ))
+
+                orders.append(Order(
+                    order_id=node["id"].rsplit("/", 1)[-1],
+                    name=node["name"],
+                    created_at=node["createdAt"],
+                    total_price=float(money["amount"]),
+                    currency=money["currencyCode"],
+                    customer_name=customer.get("displayName"),
+                    customer_email=customer.get("email"),
+                    customer_order_count=int(customer.get("numberOfOrders", 0)),
+                    line_items=line_items,
+                ))
+
+            remaining -= len(connection["edges"])
+            page_info = connection["pageInfo"]
+            if not page_info["hasNextPage"]:
+                break
+            cursor = page_info["endCursor"]
+
+        return orders
 
     def close(self) -> None:
         self._http.close()
