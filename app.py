@@ -2499,19 +2499,29 @@ with tab_orders:
 
 @st.cache_data(ttl=300, show_spinner="Henter ordrer fra Shopify …")
 def _fulfillment_load_orders(
-    status_filter: str, since_date: str, until_date: str
+    status_filter: str,
+    since_date: str,
+    until_date: str,
+    exclude_tags_csv: str,
 ) -> list[dict]:
-    """Fetch raw Shopify orders (typed-model shape) for the fulfillment tab."""
+    """Fetch raw Shopify orders (typed-model shape) for the fulfillment tab.
+
+    ``exclude_tags_csv`` is a comma-separated list of Shopify order tags that
+    will be passed through the ``tag_not:`` filter (e.g. ``"Test"`` skips test
+    orders like #1027 that shouldn't hit the warehouse).
+    """
     shop = os.environ.get("SHOPIFY_SHOP_DOMAIN", "")
     token = os.environ.get("SHOPIFY_ACCESS_TOKEN", "")
     if not shop or not token:
         return []
+    exclude_tags = [t.strip() for t in exclude_tags_csv.split(",") if t.strip()]
     client = FulfillmentShopifyClient(shop, token)
     try:
         qf = build_query_filter(
             status=status_filter if status_filter != "any" else None,
             since=since_date,
             until=until_date,
+            exclude_tags=exclude_tags,
         )
         return client.fetch_orders(qf)
     finally:
@@ -2595,7 +2605,7 @@ def _render_tab_fulfillment():
             else False
         )
 
-    _bc1, _bc2 = st.columns([3, 1])
+    _bc1, _bc2, _bc3 = st.columns([2, 2, 1])
     with _bc1:
         _batch_id = st.text_input(
             "Batch ID",
@@ -2607,6 +2617,19 @@ def _render_tab_fulfillment():
             key="ff_batch_id",
         )
     with _bc2:
+        _exclude_tags = st.text_input(
+            "Ekskluder tags",
+            value="Test",
+            placeholder="Test, Intern, …",
+            help=(
+                "Komma-separert liste med Shopify-ordretags som skal "
+                "utelukkes (bruker `tag_not:` i Shopify-query). "
+                "Standardverdien `Test` holder testordrer (f.eks. #1027) "
+                "ute av plukklisten."
+            ),
+            key="ff_exclude_tags",
+        )
+    with _bc3:
         st.write("")  # vertical spacer to align the button with the input
         if st.button(
             "🔄 Hent ordrer",
@@ -2618,7 +2641,9 @@ def _render_tab_fulfillment():
             _fulfillment_load_variant_metafields.clear()
 
     # ── Fetch orders ───────────────────────────────────────────
-    _raw = _fulfillment_load_orders(_status, str(_since), str(_until))
+    _raw = _fulfillment_load_orders(
+        _status, str(_since), str(_until), _exclude_tags
+    )
     _orders = [FulfillmentOrder.from_graphql(o) for o in _raw]
 
     if not _orders:

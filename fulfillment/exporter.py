@@ -177,6 +177,7 @@ def build_query_filter(
     status: str | None = None,
     since: str | None = None,
     until: str | None = None,
+    exclude_tags: list[str] | None = None,
 ) -> str | None:
     parts: list[str] = []
     if status:
@@ -185,4 +186,7 @@ def build_query_filter(
         parts.append(f"created_at:>={since}")
     if until:
         parts.append(f"created_at:<={until}")
+    for tag in exclude_tags or []:
+        if tag:
+            parts.append(f"tag_not:{tag}")
     return " ".join(parts) if parts else None
