@@ -2548,12 +2548,12 @@ def _fulfillment_load_variant_metafields(
 def _render_tab_fulfillment():
     if not _shopify_available:
         st.warning(
-            "Shopify ikke konfigurert \u2014 sett SHOPIFY_SHOP_DOMAIN og "
+            "Shopify ikke konfigurert — sett SHOPIFY_SHOP_DOMAIN og "
             "SHOPIFY_ACCESS_TOKEN i .env."
         )
         return
 
-    st.subheader("\ud83d\udce6 Ordreeksport & Fulfillment")
+    st.subheader("📦 Ordreeksport & Fulfillment")
     st.caption(
         "Henter Shopify-ordrer, genererer en plukkliste og produserer "
         "ordreetiketter (PDF) + CSV/Excel-eksport."
@@ -2601,15 +2601,15 @@ def _render_tab_fulfillment():
             "Batch ID",
             placeholder="f.eks. 2026-W12",
             help=(
-                "Filter/tag-grupper for fulfillment-k\u00f8rsler. "
-                "Plassholder \u2014 batch-tildeling er ikke koblet p\u00e5 enn\u00e5."
+                "Filter/tag-grupper for fulfillment-kørsler. "
+                "Plassholder — batch-tildeling er ikke koblet på ennå."
             ),
             key="ff_batch_id",
         )
     with _bc2:
         st.write("")  # vertical spacer to align the button with the input
         if st.button(
-            "\ud83d\udd04 Hent ordrer",
+            "🔄 Hent ordrer",
             type="primary",
             use_container_width=True,
             key="ff_refresh",
@@ -2674,7 +2674,7 @@ def _render_tab_fulfillment():
         _raw_df = flatten_orders(
             _orders, include_shopify_internal=_include_internal
         )
-        with st.expander("R\u00e5 ordredata", expanded=True):
+        with st.expander("Rå ordredata", expanded=True):
             st.dataframe(_raw_df, use_container_width=True, hide_index=True)
 
     # ── Export ────────────────────────────────────────────────
@@ -2686,7 +2686,7 @@ def _render_tab_fulfillment():
             _orders, variant_lookup=_variant_lookup
         )
         st.download_button(
-            "\ud83d\udce6 Last ned PDF (ordreetiketter)",
+            "📦 Last ned PDF (ordreetiketter)",
             data=_pdf_bytes,
             file_name="ordreetiketter.pdf",
             mime="application/pdf",
@@ -2698,7 +2698,7 @@ def _render_tab_fulfillment():
     with _col_csv:
         _csv_data = _df.to_csv(index=False).encode("utf-8")
         st.download_button(
-            "\u2b07\ufe0f Last ned CSV",
+            "⬇️ Last ned CSV",
             data=_csv_data,
             file_name="orders.csv",
             mime="text/csv",
@@ -2710,7 +2710,7 @@ def _render_tab_fulfillment():
         _xlsx_buf = io.BytesIO()
         _df.to_excel(_xlsx_buf, index=False, engine="openpyxl")
         st.download_button(
-            "\u2b07\ufe0f Last ned Excel",
+            "⬇️ Last ned Excel",
             data=_xlsx_buf.getvalue(),
             file_name="orders.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
