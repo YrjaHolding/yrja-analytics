@@ -1,5 +1,6 @@
 """Yrja Financial Dashboard — box subscription simulator."""
 
+import io
 import os
 import streamlit as st
 import pandas as pd
@@ -27,6 +28,18 @@ from shopify_client import (
     has_shopify_credentials,
     Order,
 )
+from fulfillment.client import ShopifyClient as FulfillmentShopifyClient
+from fulfillment.exporter import (
+    build_query_filter,
+    flatten_orders,
+    flatten_orders_exploded,
+)
+from fulfillment.models import (
+    Order as FulfillmentOrder,
+    VariantMetadata,
+    collect_variant_ids,
+)
+from fulfillment.pdf import generate_fulfillment_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -755,8 +768,22 @@ else:
 #  TABS
 # ══════════════════════════════════════════════════════════════════════
 
-tab_dashboard, tab_analyse, tab_benchmark, tab_health, tab_orders = st.tabs(
-    ["📦 Dashboard", "📊 Unit Economics", "📈 Pris benchmarking", "🏥 Forretningshelse", "🛒 Ordrestatus"]
+(
+    tab_dashboard,
+    tab_analyse,
+    tab_benchmark,
+    tab_health,
+    tab_orders,
+    tab_fulfillment,
+) = st.tabs(
+    [
+        "📦 Dashboard",
+        "📊 Unit Economics",
+        "📈 Pris benchmarking",
+        "🏥 Forretningshelse",
+        "🛒 Ordrestatus",
+        "📦 Fulfillment",
+    ]
 )
 
 
@@ -2334,6 +2361,27 @@ def _render_tab_orders():
                 _mapped = _title_to_notion.get(_li["title"], _li["title"])
                 _product_qty[_mapped] = _product_qty.get(_mapped, 0) + _li["quantity"]
 
+    # ── Build purchase-order DataFrame ─────────────────────────
+    _po_rows: list[dict] = []
+    for _prod, _qty in sorted(_product_qty.items(), key=lambda x: x[0]):
+        _match = df[df["Produktnavn"] == _prod]
+        if len(_match) > 0:
+            _r = _match.iloc[0]
+            _po_rows.append({
+                "Produktnavn": _prod,
+                "SKU Name": _r.get("SKU Name", ""),
+                "Produsent": _r["Produsent"],
+                "Antall bestilt": _qty,
+            })
+        else:
+            _po_rows.append({
+                "Produktnavn": _prod,
+                "SKU Name": "",
+                "Produsent": "",
+                "Antall bestilt": _qty,
+            })
+    _po_df = pd.DataFrame(_po_rows)
+
     # ── Join with product table (FID per Kolli, Max kolli) ────
     _capacity_map: dict[str, float] = {}
     for _, _row in df.iterrows():
@@ -2376,6 +2424,18 @@ def _render_tab_orders():
     _m_cols[1].metric("Enheter bestilt", f"{_total_units:,}")
     _m_cols[2].metric("Produkter matchet", f"{_matched} / {len(_status_rows)}")
     _m_cols[3].metric("Utsolgt", f"{_sold_out}")
+
+    # ── Download purchase order as XLSX ────────────────────────
+    if len(_po_df) > 0:
+        _xlsx_buf = io.BytesIO()
+        _po_df.to_excel(_xlsx_buf, index=False, engine="openpyxl")
+        _xlsx_buf.seek(0)
+        st.download_button(
+            label="📥 Generer innkjøpsordre",
+            data=_xlsx_buf,
+            file_name="innkjopsordre.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
     # ── Table ─────────────────────────────────────────────────
     st.dataframe(_status_df, use_container_width=True, hide_index=True)
@@ -2424,6 +2484,240 @@ def _render_tab_orders():
                 "Notion-produkter med FID per Kolli / Max kolli."
             )
 
+    # ── Purchase-order table ───────────────────────────────────
+    if len(_po_df) > 0:
+        st.subheader("Innkjøpsordre — bestilte produkter")
+        st.dataframe(_po_df, use_container_width=True, hide_index=True)
+
 
 with tab_orders:
     _render_tab_orders()
+
+
+# ── Tab 6: Fulfillment ───────────────────────────────────────────────────
+
+
+@st.cache_data(ttl=300, show_spinner="Henter ordrer fra Shopify …")
+def _fulfillment_load_orders(
+    status_filter: str, since_date: str, until_date: str
+) -> list[dict]:
+    """Fetch raw Shopify orders (typed-model shape) for the fulfillment tab."""
+    shop = os.environ.get("SHOPIFY_SHOP_DOMAIN", "")
+    token = os.environ.get("SHOPIFY_ACCESS_TOKEN", "")
+    if not shop or not token:
+        return []
+    client = FulfillmentShopifyClient(shop, token)
+    try:
+        qf = build_query_filter(
+            status=status_filter if status_filter != "any" else None,
+            since=since_date,
+            until=until_date,
+        )
+        return client.fetch_orders(qf)
+    finally:
+        client.close()
+
+
+@st.cache_data(ttl=600, show_spinner="Henter variant-metafelter fra Shopify …")
+def _fulfillment_load_variant_metafields(
+    variant_ids_csv: str,
+) -> dict[str, dict]:
+    """Fetch custom metafields for variants (CSV string used as cache key)."""
+    if not variant_ids_csv:
+        return {}
+    shop = os.environ.get("SHOPIFY_SHOP_DOMAIN", "")
+    token = os.environ.get("SHOPIFY_ACCESS_TOKEN", "")
+    if not shop or not token:
+        return {}
+    variant_ids = variant_ids_csv.split(",")
+    client = FulfillmentShopifyClient(shop, token)
+    try:
+        lookup = client.fetch_variant_metafields(variant_ids)
+        return {
+            vid: {
+                "variant_id": vm.variant_id,
+                "display_name": vm.display_name,
+                "metafields": vm.metafields,
+            }
+            for vid, vm in lookup.items()
+        }
+    finally:
+        client.close()
+
+
+def _render_tab_fulfillment():
+    if not _shopify_available:
+        st.warning(
+            "Shopify ikke konfigurert \u2014 sett SHOPIFY_SHOP_DOMAIN og "
+            "SHOPIFY_ACCESS_TOKEN i .env."
+        )
+        return
+
+    st.subheader("\ud83d\udce6 Ordreeksport & Fulfillment")
+    st.caption(
+        "Henter Shopify-ordrer, genererer en plukkliste og produserer "
+        "ordreetiketter (PDF) + CSV/Excel-eksport."
+    )
+
+    # ── Filters (in-page, so sidebar stays reserved for pricing) ──
+    _fc1, _fc2, _fc3 = st.columns([1, 1, 1])
+    with _fc1:
+        _status = st.selectbox(
+            "Fulfillment-status",
+            ["unfulfilled", "partial", "fulfilled", "any"],
+            index=0,
+            key="ff_status",
+        )
+    with _fc2:
+        _since = st.date_input(
+            "Fra",
+            value=date.today() - timedelta(days=30),
+            key="ff_since",
+        )
+    with _fc3:
+        _until = st.date_input("Til", value=date.today(), key="ff_until")
+
+    _oc1, _oc2, _oc3 = st.columns([1, 1, 1])
+    with _oc1:
+        _explode = st.toggle(
+            "Eksplodér bokser (plukkliste)", value=True, key="ff_explode"
+        )
+    with _oc2:
+        _show_raw = st.toggle("Vis rådata", value=False, key="ff_show_raw")
+    with _oc3:
+        _include_internal = (
+            st.toggle(
+                "Inkluder __shopify-felt",
+                value=False,
+                key="ff_include_internal",
+            )
+            if _show_raw
+            else False
+        )
+
+    _bc1, _bc2 = st.columns([3, 1])
+    with _bc1:
+        _batch_id = st.text_input(
+            "Batch ID",
+            placeholder="f.eks. 2026-W12",
+            help=(
+                "Filter/tag-grupper for fulfillment-k\u00f8rsler. "
+                "Plassholder \u2014 batch-tildeling er ikke koblet p\u00e5 enn\u00e5."
+            ),
+            key="ff_batch_id",
+        )
+    with _bc2:
+        st.write("")  # vertical spacer to align the button with the input
+        if st.button(
+            "\ud83d\udd04 Hent ordrer",
+            type="primary",
+            use_container_width=True,
+            key="ff_refresh",
+        ):
+            _fulfillment_load_orders.clear()
+            _fulfillment_load_variant_metafields.clear()
+
+    # ── Fetch orders ───────────────────────────────────────────
+    _raw = _fulfillment_load_orders(_status, str(_since), str(_until))
+    _orders = [FulfillmentOrder.from_graphql(o) for o in _raw]
+
+    if not _orders:
+        st.info("Ingen ordrer funnet for valgt filter.")
+        return
+
+    # ── Variant metafields for bundle enrichment ──────────────
+    _variant_ids = collect_variant_ids(_orders)
+    _raw_meta = _fulfillment_load_variant_metafields(",".join(_variant_ids))
+    _variant_lookup: dict[str, VariantMetadata] = {
+        vid: VariantMetadata(**data) for vid, data in _raw_meta.items()
+    }
+
+    # ── Build dataframe ────────────────────────────────────────
+    if _explode:
+        _df = flatten_orders_exploded(_orders, variant_lookup=_variant_lookup)
+    else:
+        _df = flatten_orders(
+            _orders, include_shopify_internal=_include_internal
+        )
+
+    # ── Batch filtering (placeholder) ──────────────────────────
+    if _batch_id:
+        st.caption(f"Batch-filter aktivt: **{_batch_id}** (plassholder)")
+        # TODO: filter _df by _batch_id when batch-assignment logic exists
+
+    # ── Display ────────────────────────────────────────────────
+    _m1, _m2, _m3 = st.columns(3)
+    _m1.metric("Ordrer", len(_orders))
+    _m2.metric("Rader", len(_df))
+    _m3.metric(
+        "Varianter m/ metafelter", f"{len(_variant_lookup)} / {len(_variant_ids)}"
+    )
+
+    st.subheader(f"{len(_df)} rader fra {len(_orders)} ordrer")
+
+    if _explode and "order_number" in _df.columns:
+        # Alternating background colors per order for easier scanning
+        _order_ids = _df["order_number"].unique()
+        _color_map = {oid: i % 2 for i, oid in enumerate(_order_ids)}
+
+        def _highlight_orders(row):
+            c = _color_map.get(row["order_number"], 0)
+            bg = "background-color: #f0f2f6" if c == 1 else ""
+            return [bg] * len(row)
+
+        _styled = _df.style.apply(_highlight_orders, axis=1)
+        st.dataframe(_styled, use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(_df, use_container_width=True, hide_index=True)
+
+    if _show_raw:
+        _raw_df = flatten_orders(
+            _orders, include_shopify_internal=_include_internal
+        )
+        with st.expander("R\u00e5 ordredata", expanded=True):
+            st.dataframe(_raw_df, use_container_width=True, hide_index=True)
+
+    # ── Export ────────────────────────────────────────────────
+    st.divider()
+    _col_pdf, _col_csv, _col_xlsx = st.columns(3)
+
+    with _col_pdf:
+        _pdf_bytes = generate_fulfillment_pdf(
+            _orders, variant_lookup=_variant_lookup
+        )
+        st.download_button(
+            "\ud83d\udce6 Last ned PDF (ordreetiketter)",
+            data=_pdf_bytes,
+            file_name="ordreetiketter.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            type="primary",
+            key="ff_dl_pdf",
+        )
+
+    with _col_csv:
+        _csv_data = _df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "\u2b07\ufe0f Last ned CSV",
+            data=_csv_data,
+            file_name="orders.csv",
+            mime="text/csv",
+            use_container_width=True,
+            key="ff_dl_csv",
+        )
+
+    with _col_xlsx:
+        _xlsx_buf = io.BytesIO()
+        _df.to_excel(_xlsx_buf, index=False, engine="openpyxl")
+        st.download_button(
+            "\u2b07\ufe0f Last ned Excel",
+            data=_xlsx_buf.getvalue(),
+            file_name="orders.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            key="ff_dl_xlsx",
+        )
+
+
+with tab_fulfillment:
+    _render_tab_fulfillment()
