@@ -2361,9 +2361,18 @@ def _render_tab_orders():
                 _mapped = _title_to_notion.get(_li["title"], _li["title"])
                 _product_qty[_mapped] = _product_qty.get(_mapped, 0) + _li["quantity"]
 
-    # ── Build purchase-order DataFrame ─────────────────────────
+    # ── Notion lookups (SLOT: antall enheter = antall SKU per slot) ──
+    _sku_per_slot_map: dict[str, int] = {}
+    for _, _row in df.iterrows():
+        _sku = _row.get("SLOT: antall enheter")
+        if pd.notna(_sku) and _sku > 0:
+            _sku_per_slot_map[_row["Produktnavn"]] = int(_sku)
+
+    # ── Build purchase-order DataFrame ──────────────────────
     _po_rows: list[dict] = []
     for _prod, _qty in sorted(_product_qty.items(), key=lambda x: x[0]):
+        _sku_per_slot = _sku_per_slot_map.get(_prod)
+        _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
         _match = df[df["Produktnavn"] == _prod]
         if len(_match) > 0:
             _r = _match.iloc[0]
@@ -2371,14 +2380,18 @@ def _render_tab_orders():
                 "Produktnavn": _prod,
                 "SKU Name": _r.get("SKU Name", ""),
                 "Produsent": _r["Produsent"],
-                "Antall bestilt": _qty,
+                "Antall r_pakker bestilt": _qty,
+                "Antall SKU per slot": _sku_per_slot,
+                "Antall SKU bestilt": _total_sku,
             })
         else:
             _po_rows.append({
                 "Produktnavn": _prod,
                 "SKU Name": "",
                 "Produsent": "",
-                "Antall bestilt": _qty,
+                "Antall r_pakker bestilt": _qty,
+                "Antall SKU per slot": _sku_per_slot,
+                "Antall SKU bestilt": _total_sku,
             })
     _po_df = pd.DataFrame(_po_rows)
 
@@ -2403,9 +2416,13 @@ def _render_tab_orders():
                 _status = "🟢 På lager"
         else:
             _status = "⚪ Ukjent kapasitet"
+        _sku_per_slot = _sku_per_slot_map.get(_prod)
+        _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
         _status_rows.append({
             "Produkt": _prod,
             "Bestilt": _qty,
+            "Antall SKU per slot": _sku_per_slot,
+            "Totalt SKU bestilt": _total_sku,
             "Kapasitet": int(_cap) if _cap else None,
             "Utnyttelse (%)": round(_pct, 1) if _pct is not None else None,
             "Status": _status,
