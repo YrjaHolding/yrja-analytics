@@ -2370,30 +2370,43 @@ def _render_tab_orders():
 
     # ── Build purchase-order DataFrame ──────────────────────
     _po_rows: list[dict] = []
-    for _prod, _qty in sorted(_product_qty.items(), key=lambda x: x[0]):
+    for _prod, _qty in _product_qty.items():
         _sku_per_slot = _sku_per_slot_map.get(_prod)
         _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
         _match = df[df["Produktnavn"] == _prod]
         if len(_match) > 0:
             _r = _match.iloc[0]
             _po_rows.append({
+                "Produsent": _r["Produsent"],
                 "Produktnavn": _prod,
                 "SKU Name": _r.get("SKU Name", ""),
-                "Produsent": _r["Produsent"],
                 "Antall r_pakker bestilt": _qty,
                 "Antall SKU per slot": _sku_per_slot,
                 "Antall SKU bestilt": _total_sku,
             })
         else:
             _po_rows.append({
+                "Produsent": "",
                 "Produktnavn": _prod,
                 "SKU Name": "",
-                "Produsent": "",
                 "Antall r_pakker bestilt": _qty,
                 "Antall SKU per slot": _sku_per_slot,
                 "Antall SKU bestilt": _total_sku,
             })
     _po_df = pd.DataFrame(_po_rows)
+    # Sort by Produsent (blank/missing goes last); keep the column order as
+    # declared above.
+    if len(_po_df) > 0:
+        _po_df = (
+            _po_df.assign(
+                _prod_sort=_po_df["Produsent"].map(
+                    lambda v: (1, "") if (v == "" or pd.isna(v)) else (0, v)
+                )
+            )
+            .sort_values(by=["_prod_sort", "Produktnavn"])
+            .drop(columns="_prod_sort")
+            .reset_index(drop=True)
+        )
 
     # ── Join with product table (FID per Kolli, Max kolli) ────
     _capacity_map: dict[str, float] = {}
@@ -2406,7 +2419,14 @@ def _render_tab_orders():
     _status_rows: list[dict] = []
     for _prod, _qty in sorted(_product_qty.items(), key=lambda x: -x[1]):
         _cap = _capacity_map.get(_prod)
-        _pct = (_qty / _cap * 100) if _cap else None
+        _sku_per_slot = _sku_per_slot_map.get(_prod)
+        _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
+        # Utilization is SKU-ordered vs SKU-capacity so the colours and
+        # thresholds reflect the actual warehouse-level sell-through.
+        if _total_sku is not None and _cap:
+            _pct = _total_sku / _cap * 100
+        else:
+            _pct = None
         if _pct is not None:
             if _pct >= 100:
                 _status = "🔴 Utsolgt"
@@ -2416,14 +2436,12 @@ def _render_tab_orders():
                 _status = "🟢 På lager"
         else:
             _status = "⚪ Ukjent kapasitet"
-        _sku_per_slot = _sku_per_slot_map.get(_prod)
-        _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
         _status_rows.append({
             "Produkt": _prod,
-            "Bestilt": _qty,
+            "Antall slots bestilt": _qty,
             "Antall SKU per slot": _sku_per_slot,
             "Totalt SKU bestilt": _total_sku,
-            "Kapasitet": int(_cap) if _cap else None,
+            "Kapasitet (SKU)": int(_cap) if _cap else None,
             "Utnyttelse (%)": round(_pct, 1) if _pct is not None else None,
             "Status": _status,
         })
@@ -2433,7 +2451,7 @@ def _render_tab_orders():
     # ── Key metrics ───────────────────────────────────────────
     _total_orders = len(_raw_orders)
     _total_units = sum(_product_qty.values())
-    _matched = sum(1 for r in _status_rows if r["Kapasitet"] is not None)
+    _matched = sum(1 for r in _status_rows if r["Kapasitet (SKU)"] is not None)
     _sold_out = sum(1 for r in _status_rows if r["Status"] == "🔴 Utsolgt")
 
     _m_cols = st.columns(4)
@@ -2479,7 +2497,7 @@ def _render_tab_orders():
         )
         _fig_bar.add_vline(x=100, line_dash="dash", line_color="red")
         _fig_bar.update_layout(
-            title="Utnyttelse per produkt",
+            title="Utnyttelse per produkt (Totalt SKU bestilt / Kapasitet SKU)",
             xaxis_title="Utnyttelse (%)",
             height=max(400, len(_chart_df) * 28),
             margin=dict(t=40, b=30, l=200),
@@ -2487,12 +2505,12 @@ def _render_tab_orders():
         )
         st.plotly_chart(_fig_bar, use_container_width=True)
 
-    # ── Unmatched products ────────────────────────────────────
-    _unmatched = _status_df[_status_df["Kapasitet"].isna()]
+    # ── Unmatched products ───────────────────────────────
+    _unmatched = _status_df[_status_df["Kapasitet (SKU)"].isna()]
     if len(_unmatched) > 0:
         with st.expander(f"⚠️ {len(_unmatched)} produkter uten kapasitetsdata"):
             st.dataframe(
-                _unmatched[["Produkt", "Bestilt"]],
+                _unmatched[["Produkt", "Antall slots bestilt"]],
                 use_container_width=True,
                 hide_index=True,
             )
