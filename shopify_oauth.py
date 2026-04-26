@@ -112,7 +112,10 @@ def exchange_code_for_token(
         },
         timeout=30,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        print(f"ERROR: {resp.status_code} from Shopify:", file=sys.stderr)
+        print(resp.text, file=sys.stderr)
+        resp.raise_for_status()
     return resp.json()
 
 
