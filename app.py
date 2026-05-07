@@ -773,6 +773,7 @@ else:
     tab_analyse,
     tab_benchmark,
     tab_health,
+    tab_influencer,
     tab_orders,
     tab_fulfillment,
 ) = st.tabs(
@@ -781,6 +782,7 @@ else:
         "📊 Unit Economics",
         "📈 Pris benchmarking",
         "🏥 Forretningshelse",
+        "🤝 Influencer modelling",
         "🛒 Ordrestatus",
         "📦 Fulfillment",
     ]
@@ -2276,7 +2278,404 @@ with tab_health:
     _render_tab_health()
 
 
-# ── Tab 5: Ordrestatus
+# ── Tab 5: Influencer modelling ─────────────────────────────────
+
+def _render_tab_influencer():
+    """Yearly revenue simulator for Yrja and influencer partners."""
+    st.subheader("🤝 Influencer-samarbeid — årsmodellering")
+    st.caption(
+        "Juster parameterne for å simulere årlig inntjening for Yrja og for "
+        "influenseren basert på unit economics-tallene fra resten av appen."
+    )
+
+    if len(df_sim) == 0:
+        st.warning(
+            "Ingen produkter med komplett data (Innpris + SLOT-kolonner) — "
+            "kan ikke beregne unit economics."
+        )
+        return
+
+    # ── Slider parameters ──────────────────────────────────────
+    _ic1, _ic2 = st.columns(2)
+
+    with _ic1:
+        _inf_count = st.slider(
+            "Antall influensere",
+            min_value=1,
+            max_value=100,
+            value=10,
+            step=1,
+            key="inf_count",
+            help="Antall influensere Yrja samarbeider med",
+        )
+        _inf_customers = st.slider(
+            "Snitt antall kunder per influenser",
+            min_value=1,
+            max_value=1000,
+            value=50,
+            step=1,
+            key="inf_customers",
+            help="Hvor mange kunder en gjennomsnittlig influenser tilfører",
+        )
+        _inf_order_size = st.slider(
+            "Snitt ordrestørrelse (kr)",
+            min_value=1749,
+            max_value=3349,
+            value=2549,
+            step=50,
+            key="inf_order_size",
+            help="Gjennomsnittlig ordreverdi inkl. MVA (1749 = 4 slots, 3349 = 8 slots)",
+        )
+
+    with _ic2:
+        _inf_monthly_buys = st.slider(
+            "Snitt antall kjøp per måned",
+            min_value=0.5,
+            max_value=2.0,
+            value=1.0,
+            step=0.1,
+            key="inf_monthly_buys",
+            help="Hvor ofte en gjennomsnittskunde kjøper per måned",
+        )
+        _inf_orders_before_churn = st.slider(
+            "Snitt antall ordre før churn",
+            min_value=1,
+            max_value=1000,
+            value=12,
+            step=1,
+            key="inf_orders_churn",
+            help="Hvor mange ordre en kunde gjør før de slutter (livstid)",
+        )
+        _inf_commission_pct = st.slider(
+            "Influenser-kommisjon (% av ordreverdi)",
+            min_value=5.0,
+            max_value=10.0,
+            value=7.5,
+            step=0.1,
+            format="%.1f",
+            key="inf_commission_pct",
+            help="Andel av ordreverdien som influenseren får",
+        )
+
+    # ── Derive box economics from order size ─────────────────────────
+    # Map order size to slot count via linear interpolation:
+    #   1749 → 4 slots, 2549 → 6 slots, 3349 → 8 slots (400 kr/slot)
+    _eff_slots = 4 + (_inf_order_size - 1749) / 400
+    _box_cogs = avg_slot_cogs * _eff_slots
+    _box_fpacks = avg_slot_fpacks * _eff_slots
+
+    _bd = compute_cost_breakdown(
+        float(_inf_order_size), _box_cogs, _box_fpacks
+    )
+    _profit_per_order_pre_commission = _bd["Driftsresultat"]
+    _commission_per_order = _inf_order_size * _inf_commission_pct / 100
+    _yrja_profit_per_order = (
+        _profit_per_order_pre_commission - _commission_per_order
+    )
+
+    # ── Yearly aggregation ─────────────────────────────────────
+    # Each customer makes min(monthly_buys * 12, orders_before_churn) orders
+    # in their first year (capped by churn).
+    _orders_per_customer_year = min(
+        _inf_monthly_buys * 12, _inf_orders_before_churn
+    )
+    _total_customers = _inf_count * _inf_customers
+    _total_orders_year = _total_customers * _orders_per_customer_year
+
+    _yearly_gross_revenue = _total_orders_year * _inf_order_size
+    _yearly_revenue_ex_mva = _total_orders_year * _bd["Omsetning eks. MVA"]
+    _yearly_yrja_pre_commission = (
+        _total_orders_year * _profit_per_order_pre_commission
+    )
+    _yearly_influencer_income = _total_orders_year * _commission_per_order
+    _yearly_yrja_profit = (
+        _yearly_yrja_pre_commission - _yearly_influencer_income
+    )
+
+    # Per-influencer income (gross commission)
+    _influencer_income_each = (
+        _yearly_influencer_income / _inf_count if _inf_count > 0 else 0.0
+    )
+
+    # ── Key metrics ─────────────────────────────────────────────
+    st.divider()
+    st.subheader("Årlige nøkkeltall")
+    _m_cols = st.columns(4)
+    _m_cols[0].metric(
+        "Totalt antall kunder",
+        f"{int(_total_customers):,}",
+        help=f"{_inf_count} influensere × {_inf_customers} kunder",
+    )
+    _m_cols[1].metric(
+        "Ordre per kunde / år",
+        f"{_orders_per_customer_year:.1f}",
+        help="min(månedlige kjøp × 12, ordre før churn)",
+    )
+    _m_cols[2].metric(
+        "Totalt antall ordre / år",
+        f"{int(round(_total_orders_year)):,}",
+    )
+    _m_cols[3].metric(
+        "Brutto årsomsetning (inkl. MVA)",
+        f"{_yearly_gross_revenue:,.0f} kr",
+    )
+
+    st.divider()
+    st.subheader("Inntekt for Yrja vs. influensere")
+    _r_cols = st.columns(3)
+    _r_cols[0].metric(
+        "Yrja — driftsresultat (etter influenser-kommisjon)",
+        f"{_yearly_yrja_profit:,.0f} kr",
+        delta=f"{_yearly_yrja_pre_commission - _yearly_yrja_profit:,.0f} kr utbetalt i kommisjon",
+        delta_color="inverse",
+    )
+    _r_cols[1].metric(
+        "Influensere — total kommisjon",
+        f"{_yearly_influencer_income:,.0f} kr",
+        delta=f"{_inf_commission_pct:.1f} % av ordreverdi",
+        delta_color="off",
+    )
+    _r_cols[2].metric(
+        "Inntekt per influenser",
+        f"{_influencer_income_each:,.0f} kr",
+        help=f"Årlig snittinntekt for hver av {_inf_count} influensere",
+    )
+
+    # ── Per-order economics breakdown ─────────────────────────────────
+    st.divider()
+    st.subheader("Unit economics per ordre")
+    st.caption(
+        f"Beregnet for en boks på {_inf_order_size:,} kr (≈ {_eff_slots:.1f} slots) "
+        "med gjennomsnittlig varekostnad fra produktkatalogen."
+    )
+
+    _ue_rows = [
+        ("Omsetning inkl. MVA", _bd["Omsetning inkl. MVA"], False),
+        ("MVA (15 %)", _bd["MVA (15 %)"], True),
+        ("Omsetning eks. MVA", _bd["Omsetning eks. MVA"], False),
+        ("Varekostnad", _bd["Varekostnad"], True),
+        ("Lager & distribusjon (fast)", _bd["Lager&dist fast"], True),
+        ("Lager variabel (plukk)", _bd["Lager var. (plukk)"], True),
+        ("Transaksjonsgebyrer", _bd["Transaksjonsgebyrer"], True),
+        (
+            "Driftsresultat (før kommisjon)",
+            _profit_per_order_pre_commission,
+            False,
+        ),
+        (
+            f"Influenser-kommisjon ({_inf_commission_pct:.1f} %)",
+            -_commission_per_order,
+            True,
+        ),
+        ("Yrja netto per ordre", _yrja_profit_per_order, False),
+    ]
+    _ue_df = pd.DataFrame(
+        [
+            {"Post": _name, "Per ordre (kr)": f"{_v:,.0f}"}
+            for _name, _v, _ in _ue_rows
+        ]
+    )
+    _bold_rows = {
+        "Driftsresultat (før kommisjon)",
+        "Yrja netto per ordre",
+        "Omsetning eks. MVA",
+    }
+    _cost_rows = {row[0] for row in _ue_rows if row[2]}
+    _styled_ue = _ue_df.style.apply(
+        lambda row: [
+            ("font-weight: bold; " if row["Post"] in _bold_rows else "")
+            + ("color: red; " if row["Post"] in _cost_rows else "")
+            for _ in row
+        ],
+        axis=1,
+    )
+    _ue_cols = st.columns([3, 2])
+    with _ue_cols[0]:
+        st.dataframe(_styled_ue, use_container_width=True, hide_index=True)
+    with _ue_cols[1]:
+        # Stacked bar: revenue split into varekost / andre drift / commission / Yrja net
+        _other_ops = (
+            abs(_bd["Lager&dist fast"])
+            + abs(_bd["Lager var. (plukk)"])
+            + abs(_bd["Transaksjonsgebyrer"])
+        )
+        _split_fig = go.Figure()
+        for _name, _val, _color in [
+            ("Varekostnad", abs(_bd["Varekostnad"]), "#e74c3c"),
+            ("Andre driftskostnader", _other_ops, "#f39c12"),
+            ("Influenser-kommisjon", _commission_per_order, "#9b59b6"),
+            ("Yrja netto", max(_yrja_profit_per_order, 0), "#27ae60"),
+        ]:
+            _split_fig.add_trace(
+                go.Bar(
+                    name=_name,
+                    x=["Per ordre"],
+                    y=[_val],
+                    marker_color=_color,
+                    text=[f"{int(round(_val)):,}"],
+                    textposition="inside",
+                    insidetextanchor="middle",
+                )
+            )
+        _split_fig.update_layout(
+            barmode="stack",
+            showlegend=True,
+            height=320,
+            margin=dict(t=30, b=10, l=10, r=10),
+            yaxis_title="kr",
+            xaxis=dict(showticklabels=False),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+            ),
+        )
+        st.plotly_chart(
+            _split_fig, use_container_width=True, key="inf_split_chart"
+        )
+
+    # ── Yearly revenue chart ──────────────────────────────────────
+    st.divider()
+    st.subheader("Årlig fordeling")
+    _rev_cols = st.columns(2)
+
+    with _rev_cols[0]:
+        _bar_fig = go.Figure()
+        _bar_fig.add_trace(
+            go.Bar(
+                x=["Yrja", "Influensere (totalt)"],
+                y=[_yearly_yrja_profit, _yearly_influencer_income],
+                marker_color=["#27ae60", "#9b59b6"],
+                text=[
+                    f"{_yearly_yrja_profit:,.0f} kr",
+                    f"{_yearly_influencer_income:,.0f} kr",
+                ],
+                textposition="outside",
+            )
+        )
+        _bar_fig.update_layout(
+            title="Årlig inntekt",
+            yaxis_title="kr",
+            height=400,
+            margin=dict(t=40, b=30),
+            showlegend=False,
+        )
+        st.plotly_chart(
+            _bar_fig, use_container_width=True, key="inf_yearly_bar"
+        )
+
+    with _rev_cols[1]:
+        # Sensitivity: yearly Yrja profit as a function of commission %
+        _pct_range = np.linspace(5.0, 10.0, 26)
+        _yrja_curve = []
+        _inf_curve = []
+        for _p in _pct_range:
+            _c = _inf_order_size * _p / 100
+            _yrja_curve.append(
+                _total_orders_year
+                * (_profit_per_order_pre_commission - _c)
+            )
+            _inf_curve.append(_total_orders_year * _c)
+
+        _sens_fig = go.Figure()
+        _sens_fig.add_trace(
+            go.Scatter(
+                x=_pct_range,
+                y=_yrja_curve,
+                mode="lines",
+                name="Yrja netto",
+                line=dict(color="#27ae60", width=2.5),
+            )
+        )
+        _sens_fig.add_trace(
+            go.Scatter(
+                x=_pct_range,
+                y=_inf_curve,
+                mode="lines",
+                name="Influensere totalt",
+                line=dict(color="#9b59b6", width=2.5),
+            )
+        )
+        _sens_fig.add_vline(
+            x=_inf_commission_pct,
+            line_dash="dash",
+            line_color="gray",
+            annotation_text=f"{_inf_commission_pct:.1f} %",
+            annotation_position="top",
+        )
+        _sens_fig.update_layout(
+            title="Årlig inntekt vs. kommisjonssats",
+            xaxis_title="Kommisjon (%)",
+            yaxis_title="kr",
+            height=400,
+            margin=dict(t=40, b=30),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+            ),
+        )
+        st.plotly_chart(
+            _sens_fig, use_container_width=True, key="inf_sensitivity"
+        )
+
+    # ── Summary table ───────────────────────────────────────────
+    st.divider()
+    _summary_rows = [
+        {"Post": "Antall influensere", "Verdi": f"{_inf_count:,}"},
+        {
+            "Post": "Totalt antall kunder",
+            "Verdi": f"{int(_total_customers):,}",
+        },
+        {
+            "Post": "Ordre per kunde / år",
+            "Verdi": f"{_orders_per_customer_year:.1f}",
+        },
+        {
+            "Post": "Totalt antall ordre / år",
+            "Verdi": f"{int(round(_total_orders_year)):,}",
+        },
+        {
+            "Post": "Brutto årsomsetning (inkl. MVA)",
+            "Verdi": f"{_yearly_gross_revenue:,.0f} kr",
+        },
+        {
+            "Post": "Omsetning eks. MVA",
+            "Verdi": f"{_yearly_revenue_ex_mva:,.0f} kr",
+        },
+        {
+            "Post": "Yrja driftsresultat (før kommisjon)",
+            "Verdi": f"{_yearly_yrja_pre_commission:,.0f} kr",
+        },
+        {
+            "Post": "Influenser-kommisjon (totalt)",
+            "Verdi": f"{_yearly_influencer_income:,.0f} kr",
+        },
+        {
+            "Post": "Yrja netto driftsresultat (etter kommisjon)",
+            "Verdi": f"{_yearly_yrja_profit:,.0f} kr",
+        },
+        {
+            "Post": "Inntekt per influenser",
+            "Verdi": f"{_influencer_income_each:,.0f} kr",
+        },
+    ]
+    st.dataframe(
+        pd.DataFrame(_summary_rows),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+with tab_influencer:
+    _render_tab_influencer()
+
+
+# ── Tab 6: Ordrestatus
 
 def _render_tab_orders():
     if not _shopify_available:
