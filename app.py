@@ -147,6 +147,7 @@ st.title("📦 Yrja Finansdashboard")
 
 # ── Constants ────────────────────────────────────────────────────────
 SUBSCRIPTIONS = {
+    "2 slots": {"slots": 2, "default_abbo_price": 800},
     "3 slots": {"slots": 3, "default_abbo_price": 1200},
     "4 slots": {"slots": 4, "default_abbo_price": 1600},
     "6 slots": {"slots": 6, "default_abbo_price": 2400},
