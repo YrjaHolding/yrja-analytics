@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import sys
 from typing import Any
 
@@ -31,12 +32,27 @@ from gordon_client import GordonAPIError, GordonClient
 from shopify_order_models import LineItem, Order, VariantMetadata, collect_variant_ids
 from shopify_orders import build_query_filter, fetch_orders, fetch_variant_metadata
 
+try:
+    from skio_client import SkioClient, has_skio_credentials
+except ImportError:  # skio_client is optional
+    SkioClient = None  # type: ignore[assignment]
+    def has_skio_credentials() -> bool:  # type: ignore[no-redef]
+        return False
+
 log = logging.getLogger("gordon_exporter")
 
 # Forward-compatible custom-attribute keys. If Yrja later wires a timeslot app
 # that writes one of these onto the order, they override the CLI flag per-order.
 DELIVERY_DATE_KEYS = ("Delivery Date", "Leveringsdato", "delivery_date", "Leveringsdag")
 TIME_WINDOW_KEYS = ("Delivery Time", "Leveringstid", "time_window", "Tidsvindu")
+
+# Regex helpers for parsing ``shippingLine.title``. Yrja's checkout writes the
+# selected slot into the shipping rate name in formats like:
+#   "2026-05-12 tirsdag 16:00-22:00 and 2026-05-12 tirsdag 12:00-18:00"
+# We pick the first ``YYYY-MM-DD`` and the first ``HH:mm-HH:mm`` we see — we
+# don't try to be clever about chronology when multiple slots are concatenated.
+_DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
+_WINDOW_RE = re.compile(r"\b(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\b")
 
 # Shopify custom-attribute keys that mirror the Norwegian checkout label
 # "Leilighet, etasje osv. (valgfritt)". If the customer fills this in, we use
@@ -92,6 +108,27 @@ def _pick_attribute(order: Order, keys: tuple[str, ...]) -> str | None:
             if val:
                 return val.strip()
     return None
+
+
+def _parse_shipping_line(title: str | None) -> tuple[str | None, str | None]:
+    """Extract (deliverydate, time-window) from a Shopify shipping rate title.
+
+    - ``deliverydate`` = the **first** ``YYYY-MM-DD`` in the title.
+    - ``time-window`` = the **first** ``HH:mm-HH:mm`` in the title, formatted
+      with spaces around the dash to match Gordon's expected
+      ``"HH:mm - HH:mm"`` shape.
+    Returns ``(None, None)`` for parts that can't be parsed; the caller can
+    fall back to a CLI default.
+    """
+    if not title:
+        return (None, None)
+    date_match = _DATE_RE.search(title)
+    win_match = _WINDOW_RE.search(title)
+    parsed_date = date_match.group(1) if date_match else None
+    parsed_window = (
+        f"{win_match.group(1)} - {win_match.group(2)}" if win_match else None
+    )
+    return (parsed_date, parsed_window)
 
 
 def _to_e164(phone: str, country_code: str | None) -> str | None:
@@ -237,6 +274,24 @@ def _inventory_from_line_items(
 # ── Payload builder ──────────────────────────────────────────────────────
 
 
+def _parse_gift(spec: str) -> tuple[str, int]:
+    """Parse ``--gift NAME`` or ``--gift NAME:QTY`` into (name, qty).
+
+    Defaults to quantity 1 when no ``:QTY`` suffix is present. ``QTY`` falls
+    back to 1 if it's not a positive integer.
+    """
+    if ":" in spec:
+        name, _, qty_str = spec.rpartition(":")
+        try:
+            qty = int(qty_str)
+        except ValueError:
+            return spec.strip(), 1
+        if qty <= 0:
+            return name.strip(), 1
+        return name.strip(), qty
+    return spec.strip(), 1
+
+
 def build_gordon_order(
     order: Order,
     variant_lookup: dict[str, VariantMetadata] | None = None,
@@ -246,6 +301,7 @@ def build_gordon_order(
     delivery_group: str | None = None,
     is_internal: bool = False,
     inventory_type: str = DEFAULT_INVENTORY_TYPE,
+    gifts: list[tuple[str, int]] | None = None,
 ) -> dict[str, Any] | None:
     """Map a Shopify ``Order`` to a Gordon ``POST /api/orders/bulk`` entry.
 
@@ -260,8 +316,21 @@ def build_gordon_order(
     ``developer.gordondelivery.com/reference/add-orders-bulk``.
     """
     addr = order.shipping_address
-    deliverydate = _pick_attribute(order, DELIVERY_DATE_KEYS) or default_date
-    time_window = _pick_attribute(order, TIME_WINDOW_KEYS) or default_window
+    parsed_date, parsed_window = _parse_shipping_line(order.shipping_line_title)
+    # Priority order:
+    #   1. Per-order custom attribute (timeslot apps that write directly there)
+    #   2. shippingLine.title parsed slot
+    #   3. Batch-level CLI default
+    deliverydate = (
+        _pick_attribute(order, DELIVERY_DATE_KEYS)
+        or parsed_date
+        or default_date
+    )
+    time_window = (
+        _pick_attribute(order, TIME_WINDOW_KEYS)
+        or parsed_window
+        or default_window
+    )
     notes = _pick_attribute(order, NOTES_ATTR_KEYS) or addr.address2 or None
 
     missing: list[str] = []
@@ -323,6 +392,15 @@ def build_gordon_order(
         inventory = _inventory_from_line_items(
             order, variant_lookup or {}, inventory_type=inventory_type
         )
+
+    # Append any company-paid gift articles to the first inventory entry.
+    if gifts and inventory:
+        inventory[0].setdefault("articles", [])
+        for gift_name, gift_qty in gifts:
+            inventory[0]["articles"].append(
+                {"name": gift_name, "quantity": gift_qty}
+            )
+
     if inventory:
         payload["inventory"] = inventory
 
@@ -390,6 +468,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             f"Temperature zone for every inventory item Gordon delivers. "
             f"Defaults to {DEFAULT_INVENTORY_TYPE!r} since Yrja ships frozen meat/fish."
+        ),
+    )
+    p.add_argument(
+        "--gift",
+        action="append",
+        default=[],
+        help=(
+            'Add a company-paid gift article to every order, e.g. '
+            '--gift "Kjøttdeig Storfe øko". Optional :QTY suffix for more '
+            'than one (default 1), e.g. --gift "Kjøttdeig Storfe øko:2". '
+            "Can be repeated for multiple gifts."
+        ),
+    )
+    p.add_argument(
+        "--skio-cross-check",
+        metavar="FROM_ISO",
+        default=None,
+        help=(
+            "Fetch Skio subscription orders created on or after FROM_ISO (e.g. "
+            "2026-05-01) and warn for any whose linked Shopify order isn't in "
+            "the export. Requires SKIO_API_TOKEN in .env."
         ),
     )
     p.add_argument(
@@ -467,12 +566,10 @@ def main(argv: list[str] | None = None) -> None:
         print(json.dumps(info, indent=2))
         return
 
-    if not args.dry_run and (not args.date or not args.window):
-        print(
-            "Error: --date and --window are required unless --dry-run is set.",
-            file=sys.stderr,
-        )
-        sys.exit(2)
+    # --date / --window are now optional fallbacks. The exporter prefers the
+    # slot encoded in ``shippingLine.title`` (or a timeslot custom attribute)
+    # for each order. The CLI flags only kick in when those are missing or
+    # unparseable, and individual orders without any usable slot are skipped.
 
     # 1. Fetch Shopify orders.
     query_filter = build_query_filter(
@@ -489,6 +586,43 @@ def main(argv: list[str] | None = None) -> None:
         len(orders),
         sum(len(o.line_items) for o in orders),
     )
+
+    # Optional Skio cross-check: warn for subscription orders Skio knows about
+    # but Shopify hasn't materialized into our pull yet.
+    if args.skio_cross_check:
+        if SkioClient is None or not has_skio_credentials():
+            log.warning(
+                "--skio-cross-check requested but SKIO_API_TOKEN is not set; skipping"
+            )
+        else:
+            from datetime import datetime, timezone
+            to_iso = datetime.now(timezone.utc).date().isoformat()
+            skio = SkioClient()
+            try:
+                skio_orders = skio.fetch_orders(
+                    from_iso=args.skio_cross_check, to_iso=to_iso
+                )
+            finally:
+                skio.close()
+            shopify_ids = {o.id.rsplit("/", 1)[-1] for o in orders}
+            missing = [
+                s for s in skio_orders
+                if not s.shopify_order_id or s.shopify_order_id not in shopify_ids
+            ]
+            log.info(
+                "Skio cross-check: %d Skio orders from %s, %d not in Shopify pull",
+                len(skio_orders), args.skio_cross_check, len(missing),
+            )
+            for s in missing:
+                log.warning(
+                    "Skio order %s (platform_number=%s, created=%s) has no "
+                    "matching Shopify order in this export",
+                    s.order_id, s.platform_number, s.created_at,
+                )
+
+    gifts: list[tuple[str, int]] = [_parse_gift(g) for g in (args.gift or [])]
+    if gifts:
+        log.info("Adding %d gift article(s) to every order: %s", len(gifts), gifts)
 
     if not orders:
         print("No orders to forward. Exiting.")
@@ -536,6 +670,7 @@ def main(argv: list[str] | None = None) -> None:
             delivery_group=args.delivery_group,
             is_internal=is_internal,
             inventory_type=args.inventory_type,
+            gifts=gifts,
         )
         if payload is None:
             skipped += 1

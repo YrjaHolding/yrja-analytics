@@ -53,6 +53,9 @@ query Orders($first: Int!, $after: String, $query: String) {
           countryCode
           phone
         }
+        shippingLine {
+          title
+        }
         lineItems(first: 50) {
           edges {
             node {

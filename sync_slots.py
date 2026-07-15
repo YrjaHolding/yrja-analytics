@@ -67,15 +67,16 @@ def run_sync(quiet: bool = False) -> bool:
     if not quiet:
         print("📥  Fetching products from Notion...")
     rows = fetch_rows_from_notion()
-    products = [r.product for r in rows]
-    shopify_products = [p for p in products if p.shopify_visible]
+    # Only sync products marked "Shopify public = Ja"
+    shopify_rows = [r for r in rows if r.product.shopify_visible]
+    shopify_products = [r.product for r in shopify_rows]
 
     if not shopify_products:
         print("⚠️  No Shopify-public products found.")
         return False
 
     if not quiet:
-        print(f"    {len(products)} products fetched, {len(shopify_products)} Shopify-public")
+        print(f"    {len(rows)} products fetched, {len(shopify_products)} Shopify-public")
 
     if not quiet:
         print("⚙️  Running optimizer...")
@@ -98,11 +99,11 @@ def run_sync(quiet: bool = False) -> bool:
         for name, s in output.slots.items()
     }
 
-    _apply_forced_units(results, rows)
+    _apply_forced_units(results, shopify_rows)
 
     if not quiet:
         print("📤  Writing SLOT columns to Notion...")
-    updated = write_slot_results(results, rows)
+    updated = write_slot_results(results, shopify_rows)
     if not quiet:
         print(f"    ✅ Updated {updated} products")
 
@@ -126,8 +127,9 @@ def watch(interval: int = 30) -> None:
                 else:
                     print(f"🔄  Initial sync (fingerprint {fp})")
 
-                products = [r.product for r in rows]
-                shopify_products = [p for p in products if p.shopify_visible]
+                # Only sync products marked "Shopify public = Ja"
+                shopify_rows = [r for r in rows if r.product.shopify_visible]
+                shopify_products = [r.product for r in shopify_rows]
 
                 if not shopify_products:
                     print("⚠️  No Shopify-public products.")
@@ -145,8 +147,8 @@ def watch(interval: int = 30) -> None:
                             }
                             for name, s in output.slots.items()
                         }
-                        _apply_forced_units(results, rows)
-                        updated = write_slot_results(results, rows)
+                        _apply_forced_units(results, shopify_rows)
+                        updated = write_slot_results(results, shopify_rows)
                         print(
                             f"    ✅ {updated} products updated | "
                             f"Target: {output.target:.2f} kr | "

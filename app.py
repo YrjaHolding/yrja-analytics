@@ -28,6 +28,11 @@ from shopify_client import (
     has_shopify_credentials,
     Order,
 )
+from skio_client import (
+    SkioClient,
+    SkioOrder,
+    has_skio_credentials,
+)
 from fulfillment.client import ShopifyClient as FulfillmentShopifyClient
 from fulfillment.exporter import (
     build_query_filter,
@@ -103,10 +108,12 @@ st.title("📦 Yrja Finansdashboard")
 
 # ── Constants ────────────────────────────────────────────────────────
 SUBSCRIPTIONS = {
-    "4 slots": {"slots": 4, "default_price": 1749},
-    "6 slots": {"slots": 6, "default_price": 2549},
-    "8 slots": {"slots": 8, "default_price": 3349},
+    "3 slots": {"slots": 3, "default_abbo_price": 1200},
+    "4 slots": {"slots": 4, "default_abbo_price": 1600},
+    "6 slots": {"slots": 6, "default_abbo_price": 2400},
+    "8 slots": {"slots": 8, "default_abbo_price": 3200},
 }
+DEFAULT_SHIPPING_PRICE = 149
 
 MVA_RATE = 0.15  # 15 % food MVA
 
@@ -253,6 +260,56 @@ def fetch_shopify_orders(
         client.close()
 
 
+_skio_available = has_skio_credentials()
+
+
+@st.cache_data(ttl=300, show_spinner="Henter ordrer fra Skio …")
+def fetch_skio_orders(
+    from_iso: str, to_iso: str, limit: int = 500,
+) -> list[dict]:
+    """Fetch Skio subscription orders as serialisable dicts for Streamlit caching.
+
+    Returns an empty list if Skio isn't configured or the API call fails;
+    callers should surface a friendly message based on ``_skio_available``.
+    """
+    if not _skio_available:
+        return []
+    try:
+        client = SkioClient()
+    except ValueError as e:
+        logger.warning("Skio client init failed: %s", e)
+        return []
+    try:
+        orders = client.fetch_orders(
+            from_iso=from_iso, to_iso=to_iso, limit=limit,
+        )
+        return [
+            {
+                "order_id": o.order_id,
+                "shopify_order_id": o.shopify_order_id,
+                "platform_number": o.platform_number,
+                "created_at": o.created_at,
+                "line_items": [
+                    {
+                        "title": li.title,
+                        "product_title": li.product_title,
+                        "quantity": li.quantity,
+                        "sku": li.sku,
+                        "variant_id": li.variant_id,
+                        "custom_attributes": li.custom_attributes,
+                    }
+                    for li in o.line_items
+                ],
+            }
+            for o in orders
+        ]
+    except Exception as e:
+        logger.warning("Skio order fetch failed: %s", e)
+        return []
+    finally:
+        client.close()
+
+
 def enrich_with_shopify(df: pd.DataFrame) -> pd.DataFrame:
     """Add Shopify metafield columns to the product DataFrame."""
     shopify_data = fetch_shopify_metafields()
@@ -302,16 +359,26 @@ def enrich_with_shopify(df: pd.DataFrame) -> pd.DataFrame:
 # ── Sidebar ──────────────────────────────────────────────────────────
 
 # Subscription prices
-st.sidebar.header("Abonnementspriser")
+st.sidebar.header("Abonnementspriser (eks. frakt)")
 prices = {}
 for label, sub in SUBSCRIPTIONS.items():
     prices[label] = st.sidebar.number_input(
-        f"{label}",
-        value=sub["default_price"],
+        f"{label} abonnement",
+        value=sub["default_abbo_price"],
         step=50,
         min_value=0,
         key=f"price_{label}",
     )
+shipping_price = st.sidebar.number_input(
+    "Frakt per ordre (kr)",
+    value=DEFAULT_SHIPPING_PRICE,
+    step=10,
+    min_value=0,
+    key="price_shipping",
+)
+subscription_total_prices = {
+    label: prices[label] + shipping_price for label in SUBSCRIPTIONS
+}
 
 # Operations parameters
 st.sidebar.divider()
@@ -389,6 +456,12 @@ if _shopify_available:
 else:
     st.sidebar.caption(
         "⚠️ Shopify ikke konfigurert (sett SHOPIFY_SHOP_DOMAIN og SHOPIFY_ACCESS_TOKEN i .env)"
+    )
+if _skio_available:
+    st.sidebar.caption("✅ Skio-tilkobling aktiv")
+else:
+    st.sidebar.caption(
+        "⚠️ Skio ikke konfigurert (sett SKIO_API_TOKEN i .env)"
     )
 if st.sidebar.button("🔄 Oppdater fra Notion & Shopify"):
     st.cache_data.clear()
@@ -840,12 +913,16 @@ with tab_dashboard:
             )
 
     st.subheader("Abonnementer")
-    cols = st.columns(3)
+    cols = st.columns(len(SUBSCRIPTIONS))
     for i, (label, sub) in enumerate(SUBSCRIPTIONS.items()):
         with cols[i]:
-            price = prices[label]
+            abbo_price = prices[label]
+            price = subscription_total_prices[label]
             n_slots = sub["slots"]
             st.metric(label, f"{price:,} kr")
+            st.caption(
+                f"Abonnement {abbo_price:,.0f} kr + frakt {shipping_price:,.0f} kr"
+            )
             st.caption(f"{n_slots} valgfrie produktslots")
 
             # Box-level portions & weight (sum of n_slots independent draws)
@@ -1021,7 +1098,11 @@ def _render_tab_analyse():
     sub_label = st.selectbox("Velg abonnement", list(SUBSCRIPTIONS.keys()))
     sub = SUBSCRIPTIONS[sub_label]
     n_slots = sub["slots"]
-    price = prices[sub_label]
+    price = subscription_total_prices[sub_label]
+    st.caption(
+        f"Pris: abonnement {prices[sub_label]:,.0f} kr + "
+        f"frakt {shipping_price:,.0f} kr = {price:,.0f} kr"
+    )
 
     # ── Slot locking ──────────────────────────────────────────
     st.subheader("Slotlåsing")
@@ -1398,7 +1479,7 @@ def _render_tab_benchmark():
         return
 
     # ── Yrja pricing controls ─────────────────────────────
-    _DELIVERY_COST = 149.0
+    _DELIVERY_COST = float(shipping_price)
     _pc1, _pc2 = st.columns(2)
     _slot_price = _pc1.slider(
         "Pris per slot (kr)", min_value=200, max_value=600, value=400, step=10, key="bench_slot_price",
@@ -1406,7 +1487,7 @@ def _render_tab_benchmark():
     _pc2.metric("Leveringskostnad", f"{_DELIVERY_COST:,.0f} kr")
 
     # Show effective price per slot for each box size
-    _eff_cols = st.columns(3)
+    _eff_cols = st.columns(len(SUBSCRIPTIONS))
     for _i, (_lbl, _sub_info) in enumerate(SUBSCRIPTIONS.items()):
         _ns = _sub_info["slots"]
         _total = _slot_price * _ns + _DELIVERY_COST
@@ -1517,7 +1598,7 @@ def _render_tab_benchmark():
     )
     _b_sub = SUBSCRIPTIONS[_b_sub_label]
     _b_n_slots = _b_sub["slots"]
-    _b_price = prices[_b_sub_label]
+    _b_price = subscription_total_prices[_b_sub_label]
     _B_N_SIMS = 10_000
 
     # Build filtered product pools
@@ -1815,12 +1896,13 @@ def _render_tab_health():
     with _h_col3:
         st.markdown("**Abonnementsmiks (vekting)**")
         _h_mix_raw: dict[str, int] = {}
+        _h_mix_default = max(1, int(round(100 / len(SUBSCRIPTIONS))))
         for _lbl, _sub_info in SUBSCRIPTIONS.items():
             _h_mix_raw[_lbl] = st.slider(
                 f"{_lbl} ({_sub_info['slots']} slots)",
                 min_value=0,
                 max_value=100,
-                value=33,
+                value=_h_mix_default,
                 key=f"h_mix_{_lbl}",
             )
         _h_mix_sum = sum(_h_mix_raw.values()) or 1
@@ -1832,7 +1914,13 @@ def _render_tab_health():
 
     # ── Compute weighted per-order economics ──────────────────
     _h_price_adj = 1 + _h_price_factor / 100
-    _h_adj_prices = {lbl: prices[lbl] * _h_price_adj for lbl in SUBSCRIPTIONS}
+    _h_adj_abbo_prices = {
+        lbl: prices[lbl] * _h_price_adj for lbl in SUBSCRIPTIONS
+    }
+    _h_adj_prices = {
+        lbl: _h_adj_abbo_prices[lbl] + shipping_price
+        for lbl in SUBSCRIPTIONS
+    }
 
     _h_weighted_price = sum(
         _h_adj_prices[lbl] * (_h_mix[lbl] / 100) for lbl in SUBSCRIPTIONS
@@ -2296,6 +2384,27 @@ def _render_tab_influencer():
         return
 
     # ── Slider parameters ──────────────────────────────────────
+    _subscription_totals = np.array(
+        [subscription_total_prices[_lbl] for _lbl in SUBSCRIPTIONS],
+        dtype=float,
+    )
+    _inf_order_min = int(np.floor(_subscription_totals.min()))
+    _inf_order_max = int(np.ceil(_subscription_totals.max()))
+    _inf_order_default = int(
+        round(
+            subscription_total_prices.get(
+                "6 slots", float(_subscription_totals.mean())
+            )
+        )
+    )
+    _inf_order_default = min(
+        max(_inf_order_default, _inf_order_min), _inf_order_max
+    )
+    _inf_reference = ", ".join(
+        f"{int(round(subscription_total_prices[_lbl]))} = "
+        f"{SUBSCRIPTIONS[_lbl]['slots']} slots"
+        for _lbl in SUBSCRIPTIONS
+    )
     _ic1, _ic2 = st.columns(2)
 
     with _ic1:
@@ -2319,12 +2428,15 @@ def _render_tab_influencer():
         )
         _inf_order_size = st.slider(
             "Snitt ordrestørrelse (kr)",
-            min_value=1749,
-            max_value=3349,
-            value=2549,
+            min_value=_inf_order_min,
+            max_value=_inf_order_max,
+            value=_inf_order_default,
             step=50,
             key="inf_order_size",
-            help="Gjennomsnittlig ordreverdi inkl. MVA (1749 = 4 slots, 3349 = 8 slots)",
+            help=(
+                "Gjennomsnittlig ordreverdi inkl. MVA. "
+                f"Referanse: {_inf_reference}"
+            ),
         )
 
     with _ic2:
@@ -2358,9 +2470,27 @@ def _render_tab_influencer():
         )
 
     # ── Derive box economics from order size ─────────────────────────
-    # Map order size to slot count via linear interpolation:
-    #   1749 → 4 slots, 2549 → 6 slots, 3349 → 8 slots (400 kr/slot)
-    _eff_slots = 4 + (_inf_order_size - 1749) / 400
+    # Map order size to effective slot count using linear interpolation
+    # across the configured subscription price points.
+    _slot_points = np.array(
+        [SUBSCRIPTIONS[_lbl]["slots"] for _lbl in SUBSCRIPTIONS],
+        dtype=float,
+    )
+    _price_points = np.array(
+        [subscription_total_prices[_lbl] for _lbl in SUBSCRIPTIONS],
+        dtype=float,
+    )
+    _sort = np.argsort(_price_points)
+    _prices_sorted = _price_points[_sort]
+    _slots_sorted = _slot_points[_sort]
+    _unique_prices, _unique_idx = np.unique(_prices_sorted, return_index=True)
+    _unique_slots = _slots_sorted[_unique_idx]
+    if len(_unique_prices) == 1:
+        _eff_slots = float(_unique_slots[0])
+    else:
+        _eff_slots = float(
+            np.interp(_inf_order_size, _unique_prices, _unique_slots)
+        )
     _box_cogs = avg_slot_cogs * _eff_slots
     _box_fpacks = avg_slot_fpacks * _eff_slots
 
@@ -2865,10 +2995,11 @@ def _render_tab_orders():
         _po_df.to_excel(_xlsx_buf, index=False, engine="openpyxl")
         _xlsx_buf.seek(0)
         st.download_button(
-            label="📥 Generer innkjøpsordre",
+            label="📥 Generer innkjøpsordre (Shopify)",
             data=_xlsx_buf,
-            file_name="innkjopsordre.xlsx",
+            file_name="innkjopsordre_shopify.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="order_dl_shopify_xlsx",
         )
 
     # ── Table ─────────────────────────────────────────────────
@@ -2918,10 +3049,151 @@ def _render_tab_orders():
                 "Notion-produkter med FID per Kolli / Max kolli."
             )
 
-    # ── Purchase-order table ───────────────────────────────────
+    # ── Purchase-order table (Shopify) ──────────────────────────
     if len(_po_df) > 0:
-        st.subheader("Innkjøpsordre — bestilte produkter")
+        st.subheader("Innkjøpsordre — Shopify")
+        st.caption(
+            "Inventarbehov fra Shopify-ordrer (engangskjøp og abonnementsfaktureringer "
+            "som har gått gjennom Shopify-kassen)."
+        )
         st.dataframe(_po_df, use_container_width=True, hide_index=True)
+
+    # ── Skio purchase-order table ───────────────────────────────
+    st.divider()
+    st.subheader("Innkjøpsordre — Skio")
+    st.caption(
+        "Inventarbehov fra Skio-abonnementsordrer i samme periode. "
+        "Skilles fra Shopify-tabellen så innkjøp kan planlegges per kanal."
+    )
+
+    if not _skio_available:
+        st.info(
+            "⚠️ Skio ikke konfigurert — sett `SKIO_API_TOKEN` i `.env` for å hente "
+            "abonnementsordrer fra Skio."
+        )
+    else:
+        _skio_raw_orders = fetch_skio_orders(
+            from_iso=_o_from.isoformat() if _o_from else "",
+            to_iso=_o_to.isoformat() if _o_to else "",
+            limit=int(_o_limit),
+        )
+
+        if not _skio_raw_orders:
+            st.info("Ingen Skio-ordrer funnet for valgt periode.")
+        else:
+            # Aggregate Skio line items into a Notion-product → qty dict.
+            # Bundle detection prefers explicit `_pvgid://` attrs (works even
+            # when product titles vary), falling back to the bundle-title set.
+            _skio_product_qty: dict[str, int] = {}
+            for _order in _skio_raw_orders:
+                for _li in _order["line_items"]:
+                    _prod_title = (
+                        _li.get("product_title")
+                        or _li.get("title")
+                        or ""
+                    )
+                    if _prod_title in _EXCLUDED_TITLES:
+                        continue
+
+                    _attrs = _li.get("custom_attributes") or {}
+                    _has_pvgid = any(
+                        str(k).startswith(_PVGID_PREFIX) for k in _attrs
+                    )
+                    _is_bundle = (
+                        _prod_title in _BUNDLE_TITLES or _has_pvgid
+                    )
+
+                    if _is_bundle:
+                        for _attr_key, _attr_val in _attrs.items():
+                            if not str(_attr_key).startswith(_PVGID_PREFIX):
+                                continue
+                            _vid = str(_attr_key)[len(_PVGID_PREFIX):]
+                            _qty = (
+                                int(_attr_val)
+                                if str(_attr_val).isdigit()
+                                else 1
+                            )
+                            _notion_name = _vid_to_notion.get(
+                                _vid, f"Variant {_vid}"
+                            )
+                            _skio_product_qty[_notion_name] = (
+                                _skio_product_qty.get(_notion_name, 0) + _qty
+                            )
+                    else:
+                        # Regular line item: match by variant ID first, then by
+                        # Shopify product title (via _title_to_notion).
+                        _li_vid = _li.get("variant_id")
+                        _notion_name = None
+                        if _li_vid:
+                            _notion_name = _vid_to_notion.get(str(_li_vid))
+                        if not _notion_name:
+                            _notion_name = _title_to_notion.get(
+                                _prod_title, _prod_title
+                            )
+                        _skio_product_qty[_notion_name] = (
+                            _skio_product_qty.get(_notion_name, 0)
+                            + int(_li.get("quantity") or 0)
+                        )
+
+            # Build the Skio purchase-order DataFrame (same columns as Shopify).
+            _po_rows_skio: list[dict] = []
+            for _prod, _qty in _skio_product_qty.items():
+                _sku_per_slot = _sku_per_slot_map.get(_prod)
+                _total_sku = _qty * _sku_per_slot if _sku_per_slot else None
+                _match = df[df["Produktnavn"] == _prod]
+                if len(_match) > 0:
+                    _r = _match.iloc[0]
+                    _po_rows_skio.append({
+                        "Produsent": _r["Produsent"],
+                        "Produktnavn": _prod,
+                        "SKU Name": _r.get("SKU Name", ""),
+                        "Antall r_pakker bestilt": _qty,
+                        "Antall SKU per slot": _sku_per_slot,
+                        "Antall SKU bestilt": _total_sku,
+                    })
+                else:
+                    _po_rows_skio.append({
+                        "Produsent": "",
+                        "Produktnavn": _prod,
+                        "SKU Name": "",
+                        "Antall r_pakker bestilt": _qty,
+                        "Antall SKU per slot": _sku_per_slot,
+                        "Antall SKU bestilt": _total_sku,
+                    })
+            _po_df_skio = pd.DataFrame(_po_rows_skio)
+            if len(_po_df_skio) > 0:
+                _po_df_skio = (
+                    _po_df_skio.assign(
+                        _prod_sort=_po_df_skio["Produsent"].map(
+                            lambda v: (1, "") if (v == "" or pd.isna(v)) else (0, v)
+                        )
+                    )
+                    .sort_values(by=["_prod_sort", "Produktnavn"])
+                    .drop(columns="_prod_sort")
+                    .reset_index(drop=True)
+                )
+
+            # Skio metrics row.
+            _skio_total_orders = len(_skio_raw_orders)
+            _skio_total_units = sum(_skio_product_qty.values())
+            _sm_cols = st.columns(2)
+            _sm_cols[0].metric("Skio-ordrer", f"{_skio_total_orders:,}")
+            _sm_cols[1].metric("Enheter bestilt (Skio)", f"{_skio_total_units:,}")
+
+            if len(_po_df_skio) > 0:
+                _xlsx_skio = io.BytesIO()
+                _po_df_skio.to_excel(_xlsx_skio, index=False, engine="openpyxl")
+                _xlsx_skio.seek(0)
+                st.download_button(
+                    label="📥 Generer innkjøpsordre (Skio)",
+                    data=_xlsx_skio,
+                    file_name="innkjopsordre_skio.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="order_dl_skio_xlsx",
+                )
+                st.dataframe(
+                    _po_df_skio, use_container_width=True, hide_index=True,
+                )
 
 
 with tab_orders:

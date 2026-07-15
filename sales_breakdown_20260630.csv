@@ -1,0 +1,61 @@
+row_type,producer,product_id,sku_name,product_title,slot_antall_enheter,pa_lager,status,distinct_orders,units_sold,units_sold_excl_cancelled,packages_sold,packages_sold_excl_cancelled,order_refs
+product,Opaker,10444612829496,Kjøttdeig Storfe 14-18% øko,"Storfe, kjøttdeig, økologisk på beite, 3 x 400 g",3,157,ACTIVE,33,53,53,159,159,"1021, 1022, 1024, 1025, 1026, 1028, 1030, 1031, 1032, 1035, 1036, 1037, 1038, 1047, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1058, 1064, 1065, 1071, 1073, 1074, 1076, 1080, 1081, 1088, 1092, 1095"
+product,Opaker,10444613452088,Burger 2 pk storfe øko,"Storfe, burger, økologisk på beite, 6 x 150 g",3,43,ACTIVE,20,22,22,66,66,"1023, 1025, 1026, 1029, 1031, 1035, 1047, 1050, 1052, 1053, 1064, 1065, 1072, 1079, 1082, 1085, 1087, 1088, 1092, 1097"
+product,Opaker,10398235722040,Entrecôte øko,"Storfe, entrecôte, økologisk på beite, 500 g",1,-8,ACTIVE,23,48,48,48,48,"1019, 1021, 1022, 1023, 1024, 1025, 1026, 1029, 1031, 1032, 1035, 1036, 1039, 1061, 1065, 1066, 1073, 1074, 1094, 1095, 1096, 1097, 1099"
+product,Opaker,10444612337976,Høyrygg Storfe,"Storfe, høyrygg, økologisk på beite, 1 kg",1,8,ACTIVE,16,19,19,19,19,"1026, 1028, 1032, 1035, 1036, 1050, 1055, 1065, 1074, 1076, 1077, 1081, 1087, 1093, 1096, 1099"
+product,Opaker,10494089658680,Indrefilet Storfe øko,"Storfe, indrefilet, økologisk på beite, 400 g",1,7,ACTIVE,17,19,19,19,19,"1019, 1023, 1025, 1026, 1030, 1035, 1052, 1061, 1064, 1065, 1071, 1072, 1082, 1083, 1084, 1087, 1092"
+product,Opaker,10398240211256,Mørbrad Storfe øko,"Storfe, mørbrad, økologisk på beite, 650 g",1,3,ACTIVE,16,16,16,16,16,"1023, 1025, 1030, 1035, 1052, 1058, 1064, 1069, 1071, 1077, 1080, 1083, 1087, 1088, 1092, 1095"
+product,Opaker,10444613321016,Grytekjøtt Storfe øko,"Storfe, grytekjøtt, økologisk på beite, 1,1 kg",1,37,ACTIVE,13,15,15,15,15,"1021, 1024, 1029, 1030, 1031, 1035, 1037, 1038, 1050, 1058, 1071, 1081, 1095"
+product,Opaker,10703819211064,Tomat og basilikum grillpølse,"Storfe, pølser med tomat og basilikum, økologisk på beite, 3 x 400 g",3,-2,ACTIVE,2,3,3,9,9,"1085, 1086"
+product,Opaker,10494025793848,Ytrefilet Storfe øko,"Storfe, ytrefilet, økologisk på beite, 450 g",1,27,ACTIVE,5,5,5,5,5,"1035, 1039, 1075, 1080, 1088"
+product,Opaker,10703809413432,Chili grillpølser,"Storfe, chili grillpølse, økologisk på beite, 3 x 350 g",3,9,ACTIVE,1,1,1,3,3,1085
+product,Opaker,10703776317752,Karbonadedeig Storfe Øko 6% fett,"Storfe, karbonadedeig, økologisk på beite, 3 x 400 g",3,51,ACTIVE,0,0,0,0,0,
+product,Opaker,10703771205944,Keto kjøttdeig Stofe Øko 24-30%,"Storfe, kjøttdeig 24-30% fett, økologisk på beite, 3 x 400 g",3,0,ACTIVE,0,0,0,0,0,
+producer_total,Opaker,,,(12 products),,332,,55,201,201,359,359,
+product,Stølsvidda,10398230708536,Nakkekoteletter,"Utegris, nakkekoteletter, frittgående, 2 x 700 g",2,6,ACTIVE,11,14,14,28,28,"1021, 1032, 1035, 1038, 1040, 1051, 1069, 1073, 1078, 1086, 1093"
+product,Stølsvidda,10444597461304,Bacon,"Utegris, bacon, frittgående, 3 x 300 g",3,17,ACTIVE,7,7,7,21,21,"1032, 1035, 1055, 1064, 1073, 1084, 1093"
+product,Stølsvidda,10452198162744,Kjøttdeig av fjellgris,"Utegris, kjøttdeig, frittgående, 4 x 400 g",4,0,ACTIVE,4,4,4,16,16,"1035, 1038, 1040, 1093"
+product,Stølsvidda,10703693021496,"Provance, svin","Utegris, provencepølser, 4 x 280 g",4,-2,ACTIVE,3,4,4,16,16,"1079, 1085, 1086"
+product,Stølsvidda,10703700721976,"Grillribbe, skiver","Utegris, grillribbe i skiver, 3 x 350 g",3,-1,ACTIVE,4,5,5,15,15,"1075, 1085, 1093, 1097"
+product,Stølsvidda,10494179213624,Pancetta,"Utegris, pancetta, 2 x 300 g",2,1,ACTIVE,4,4,4,8,8,"1024, 1025, 1035, 1064"
+product,Stølsvidda,10398195679544,5 koteletter (2pk + 3pk),"Utegris, koteletter, frittgående, 5 x 300 g",1,26,ACTIVE,4,4,4,4,4,"1021, 1035, 1058, 1072"
+product,Stølsvidda,10703723004216,Sommerkotletter,"Utegris, sommerkoteletter, 2 x 600 g",2,6,ACTIVE,2,2,2,4,4,"1079, 1085"
+product,Stølsvidda,10444598051128,Ytrefilet av utegris,"Utegris, ytrefilet, frittgående, 2 x 600 g",2,3,ACTIVE,2,2,2,4,4,"1035, 1039"
+product,Stølsvidda,10452198490424,Bakt knokekjøtt av gris,"Utegris, bakt knoke, frittgående, 3 x 500 g",3,4,ACTIVE,1,1,1,3,3,1035
+product,Stølsvidda,10494180655416,Sprengt fjellgris,"Utegris, pulled pork, frittgående, 3 x 450 g",3,3,ACTIVE,1,1,1,3,3,1035
+product,Stølsvidda,10703730016568,"Fjellgrisburger, grill","Utegris, grillburger, 3 x 395 g",3,0,ACTIVE,1,1,1,3,3,1082
+product,Stølsvidda,10703722316088,Spareribs marinert,"Utegris, spareribs marinert, 2 x 500 g",2,0,ACTIVE,1,1,1,2,2,1086
+product,Stølsvidda,10703721267512,Spareribs,"Utegris, spareribs, 2 x 550 g",2,-1,ACTIVE,1,1,1,2,2,1097
+product,Stølsvidda,10703691186488,"Salciccia, svin","Utegris, salsiccia, 4 x 280 g",4,0,DRAFT,0,0,0,0,0,
+product,Stølsvidda,10703677784376,"Fjellwurst, svin","Utegris, fjellwurst, 4 x 280 g",4,-1,ACTIVE,0,0,0,0,0,
+producer_total,Stølsvidda,,,(16 products),,61,,24,51,51,129,129,
+product,Homlagaarden,10453341208888,Kyllinglår,"Kyllinglår, økologisk, 3 x 425 g",3,99,ACTIVE,12,13,13,39,39,"1021, 1022, 1035, 1037, 1055, 1066, 1077, 1078, 1081, 1094, 1096, 1099"
+product,Homlagaarden,10398485971256,Hel kylling,"Kylling, hel, økologisk, 2 kg",1,38,ACTIVE,13,14,14,14,14,"1019, 1024, 1028, 1035, 1037, 1038, 1061, 1076, 1077, 1083, 1093, 1096, 1099"
+product,Homlagaarden,10494016258360,Kyllingvinger,"Kyllingvinger, økologisk, 3 x 550 g",3,50,ACTIVE,4,4,4,12,12,"1025, 1035, 1064, 1073"
+product,Homlagaarden,10493979853112,"Kylling, wokkjøtt","Kylling, wokkjøtt, økologisk, 2 x 400 g",2,42,ACTIVE,6,6,6,12,12,"1028, 1032, 1035, 1040, 1076, 1086"
+product,Homlagaarden,10453342060856,Kyllingbryst,"Kyllingbryst, økologisk, 2 x 350 g",2,73,ACTIVE,4,5,5,10,10,"1035, 1075, 1077, 1088"
+product,Homlagaarden,10494010032440,"Kalkun, kjøttdeig","Kalkunkjøttdeig, økologisk, 3 x 420 g",3,39,ACTIVE,2,2,2,6,6,"1035, 1078"
+product,Homlagaarden,10674087297336,Kylling lårfilet,"Kylling lårfilet, benfri, økologisk, 2 x 550 g",2,66,ACTIVE,2,2,2,4,4,"1051, 1073"
+product,Homlagaarden,10703759900984,Kalkunburger,"Kalkunburger, økologisk, 3 x 300 g",3,0,ACTIVE,0,0,0,0,0,
+producer_total,Homlagaarden,,,(8 products),,407,,29,46,46,97,97,
+product,Hadeland Viltslakteri,10487351673144,Elgkarbonade,"Elg, karbonader, 15 x 100 g",3,132,ACTIVE,7,7,7,21,21,"1019, 1024, 1029, 1035, 1053, 1084, 1087"
+product,Hadeland Viltslakteri,10534483296568,Fritt vilt elggrill,"Elg, grillpølse, 3 x 500 g",3,137,ACTIVE,4,4,4,12,12,"1024, 1035, 1053, 1069"
+product,Hadeland Viltslakteri,10494192812344,Fritt vilt bratwurst,"Hjortepølser, 15 x 100 g",3,139,ACTIVE,3,3,3,9,9,"1035, 1086, 1095"
+producer_total,Hadeland Viltslakteri,,,(3 products),,408,,10,14,14,42,42,
+product,Frøya Gourmet,10487349444920,Torsk,"Torsk, filet, villfanget, 3 x 250 g",1,2,ACTIVE,7,7,7,7,7,"1019, 1035, 1052, 1067, 1078, 1082, 1092"
+product,Frøya Gourmet,10487350395192,Sei,"Sei, filet, villfanget, 6 x 250 g",1,7,ACTIVE,3,4,4,4,4,"1035, 1051, 1067"
+product,Frøya Gourmet,10487349543224,Lyr,"Lyr, filet, villfanget, 5 x 250 g",1,2,ACTIVE,4,4,4,4,4,"1024, 1035, 1067, 1084"
+product,Frøya Gourmet,10487350788408,Sjøkreps,"Sjøkreps, villfanget, 600 g",1,-1,ACTIVE,3,4,4,4,4,"1035, 1061, 1097"
+product,Frøya Gourmet,10703746564408,Reker 50/70,"Store reker, villfanget, 1 kg",1,-2,ACTIVE,1,1,1,1,1,1067
+product,Frøya Gourmet,10703755280696,Kamskjell (vent),"Kamskjell, villfanget, 1 kg",1,0,DRAFT,0,0,0,0,0,
+producer_total,Frøya Gourmet,,,(6 products),,8,,12,20,20,20,20,
+product,Kvarøy,10398485938488,Laks: Portions Club Pack 6x151 365,"Bærekraftig oppdrettslaks, filet uten bein, 6 x 150 g",1,60,ACTIVE,19,19,19,19,19,"1019, 1025, 1035, 1036, 1039, 1040, 1052, 1064, 1069, 1072, 1074, 1075, 1077, 1079, 1082, 1083, 1092, 1096, 1099"
+producer_total,Kvarøy,,,(1 products),,60,,19,19,19,19,19,
+grand_total,ALL PRODUCERS,,,(46 products),,1276,,58,351,351,666,666,
+box_product,Yrja,10535441170744,,Råvareboks,1,23,ACTIVE,55,55,55,55,55,"1019, 1021, 1022, 1023, 1024, 1025, 1026, 1028, 1029, 1030, 1031, 1032, 1036, 1037, 1038, 1039, 1040, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1058, 1061, 1064, 1065, 1066, 1067, 1069, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079, 1080, 1081, 1082, 1083, 1084, 1086, 1087, 1088, 1092, 1093, 1094, 1095, 1096, 1097, 1099"
+box_product,Yrja,10533199151416,,Yrjas grillboks - Liten (4),3,0,ACTIVE,1,1,1,3,3,1085
+box_product,Yrja,10699882791224,,Gavekort fra Yrja,1,0,ACTIVE,1,1,1,1,1,1068
+box_product,Yrja,10674925994296,,Yrjas utvalgte råvareboks,1,0,ACTIVE,0,0,0,0,0,
+box_product,Yrja,10533750014264,Hjortepølse,Yrjas bestselger - Liten (4),3,-3,ACTIVE,0,0,0,0,0,
+box_total,HOUSE / BOX SKUs,,,(5 products),,20,,57,57,57,59,59,
+delivered_orders_total,,,,GIFT: +1 Kjottdeig per delivered order,,,,59,,,,,

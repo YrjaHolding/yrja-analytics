@@ -132,6 +132,7 @@ class Order:
     total_price: float
     currency: str
     shipping_address: ShippingAddress
+    shipping_line_title: str | None = None
     custom_attributes: list[Property] = field(default_factory=list)
     line_items: list[LineItem] = field(default_factory=list)
 
@@ -146,6 +147,7 @@ class Order:
         # Fall back to billingAddress for local delivery orders
         addr = node.get("shippingAddress") or node.get("billingAddress")
         price_set = node.get("totalPriceSet", {}).get("shopMoney", {})
+        shipping_line = node.get("shippingLine") or {}
         return cls(
             id=node["id"],
             name=node["name"],
@@ -157,6 +159,7 @@ class Order:
             total_price=float(price_set.get("amount", "0")),
             currency=price_set.get("currencyCode", "NOK"),
             shipping_address=ShippingAddress.from_graphql(addr),
+            shipping_line_title=(shipping_line.get("title") or None),
             custom_attributes=[
                 Property(key=a["key"], value=a["value"] or "")
                 for a in node.get("customAttributes", [])
