@@ -84,6 +84,45 @@ def safe_float(value, field_name: str = "") -> float | None:
     return None
 
 
+def _is_yes_value(value: str | bool | None) -> bool:
+    """Interpret common Yes/No representations."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"ja", "yes", "true", "1", "y"}
+
+
+def _is_shopify_public(props: dict) -> bool:
+    """Parse the Notion `Shopify public` property across possible field types."""
+    raw = props.get("Shopify public", {})
+    prop_type = raw.get("type")
+
+    if prop_type == "checkbox":
+        return bool(raw.get("checkbox"))
+    if prop_type == "select":
+        return _is_yes_value((raw.get("select") or {}).get("name"))
+    if prop_type == "status":
+        return _is_yes_value((raw.get("status") or {}).get("name"))
+    if prop_type == "multi_select":
+        return any(
+            _is_yes_value(opt.get("name")) for opt in raw.get("multi_select", [])
+        )
+
+    # Fallbacks for legacy/atypical schema representations
+    if "rich_text" in raw:
+        txt = "".join(
+            item.get("plain_text", "") for item in raw.get("rich_text", [])
+        ).strip()
+        return _is_yes_value(txt)
+    if "title" in raw:
+        txt = "".join(
+            item.get("plain_text", "") for item in raw.get("title", [])
+        ).strip()
+        return _is_yes_value(txt)
+    return False
+
+
 # ── Page config ────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Yrja Finansdashboard", page_icon="📦", layout="wide"
@@ -172,6 +211,7 @@ def fetch_product_table() -> pd.DataFrame:
                 "ODA pris/kg": _get_number(props, "ODA pris/kg"),
                 "AMOI pris/kg": _get_number(props, "AMOI pris/kg "),
                 "Shopify Variant ID": _get_number(props, "Shopify Variant ID"),
+                "Shopify public": _is_shopify_public(props),
                 "FID per Kolli": safe_float(
                     _get_number(props, "FID per Kolli"), "FID per Kolli"
                 ),
@@ -813,8 +853,12 @@ def render_box(
 
 df = fetch_product_table()
 df = enrich_with_shopify(df)
-
-df_sim = df.dropna(
+_shopify_public_mask = (
+    df["Shopify public"].fillna(False).astype(bool)
+    if "Shopify public" in df.columns
+    else pd.Series(False, index=df.index)
+)
+df_sim = df[_shopify_public_mask].dropna(
     subset=["Innpris (kr/kg)", "SLOT: tot slot vekt", "SLOT: antall enheter"]
 ).copy()
 df_sim["Slot innpris (kr)"] = (
@@ -873,14 +917,18 @@ with tab_dashboard:
         f"{len(df)} produkter lastet fra Notion"
         + (f" · {_n_matched} med Shopify-prisdata" if _shopify_meta else "")
     )
+    st.caption(
+        f"{len(df_sim)} produkter i simulering "
+        "(Shopify public = Yes + komplett simuleringsdata)"
+    )
 
     # ── Per-slot statistics for box-level aggregation ────────
-    _portions_series = df["Porsjoner"].dropna()
+    _portions_series = df_sim["Porsjoner"].dropna()
     _portions_label = "Porsjoner"
     if len(_portions_series) == 0:
-        _portions_series = df["SLOT: antall enheter"].dropna()
+        _portions_series = df_sim["SLOT: antall enheter"].dropna()
         _portions_label = "Antall enheter"
-    _slot_wt_series = df["SLOT: tot slot vekt"].dropna()
+    _slot_wt_series = df_sim["SLOT: tot slot vekt"].dropna()
 
     _has_portions = len(_portions_series) > 0
     _has_weight = len(_slot_wt_series) > 0
@@ -939,7 +987,7 @@ with tab_dashboard:
                     f"Vekt: **{_box_wt_mean:.2f}** ± {_box_wt_std:.2f} kg"
                 )
 
-            n_combos = comb(len(df) + n_slots - 1, n_slots)
+            n_combos = comb(len(df_sim) + n_slots - 1, n_slots)
             st.write(f"_{n_combos:,} mulige kombinasjoner_")
 
             # ── Simulate single box ───────────────────────────
