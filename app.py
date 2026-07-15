@@ -858,7 +858,8 @@ _shopify_public_mask = (
     if "Shopify public" in df.columns
     else pd.Series(False, index=df.index)
 )
-df_sim = df[_shopify_public_mask].dropna(
+df_public = df[_shopify_public_mask].copy()
+df_sim = df_public.dropna(
     subset=["Innpris (kr/kg)", "SLOT: tot slot vekt", "SLOT: antall enheter"]
 ).copy()
 df_sim["Slot innpris (kr)"] = (
@@ -910,11 +911,11 @@ else:
 
 with tab_dashboard:
     st.subheader("Produktoversikt")
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df_public, use_container_width=True, hide_index=True)
     _shopify_meta = fetch_shopify_metafields()
-    _n_matched = df["Pris/kg (utpris)"].notna().sum()
+    _n_matched = df_public["Pris/kg (utpris)"].notna().sum()
     st.caption(
-        f"{len(df)} produkter lastet fra Notion"
+        f"{len(df_public)} produkter vist (Shopify public = Yes)"
         + (f" · {_n_matched} med Shopify-prisdata" if _shopify_meta else "")
     )
     st.caption(
@@ -1561,7 +1562,9 @@ def _render_tab_benchmark():
         "S: antall enheter", "S: f-pack kg",
         "Yrja pris/kg", "ODA pris/kg", "AMOI pris/kg",
     ]
-    _bench_display = df[[c for c in _bench_cols if c in df.columns]].copy()
+    _bench_display = df_public[
+        [c for c in _bench_cols if c in df_public.columns]
+    ].copy()
 
     # ── Section B: Filter ─────────────────────────────────────
     _fc1, _fc2 = st.columns(2)
