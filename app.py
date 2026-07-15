@@ -416,8 +416,33 @@ shipping_price = st.sidebar.number_input(
     min_value=0,
     key="price_shipping",
 )
-subscription_total_prices = {
+st.sidebar.caption("Volumrabatt per abonnement")
+subscription_discounts_pct = {}
+for label in SUBSCRIPTIONS:
+    subscription_discounts_pct[label] = st.sidebar.number_input(
+        f"Rabatt {label} (%)",
+        value=0.0,
+        min_value=0.0,
+        max_value=100.0,
+        step=1.0,
+        format="%.1f",
+        key=f"discount_{label}",
+    )
+subscription_prices_before_discount = {
     label: prices[label] + shipping_price for label in SUBSCRIPTIONS
+}
+subscription_discount_amounts = {
+    label: subscription_prices_before_discount[label]
+    * (subscription_discounts_pct[label] / 100)
+    for label in SUBSCRIPTIONS
+}
+subscription_total_prices = {
+    label: max(
+        0.0,
+        subscription_prices_before_discount[label]
+        - subscription_discount_amounts[label],
+    )
+    for label in SUBSCRIPTIONS
 }
 
 # Operations parameters
@@ -662,7 +687,7 @@ def run_simulation(
 
 # Styling constants for cost breakdown tables
 PCT_BD_ITEMS = {"Dekningsbidrag/Omsetn", "Driftsresultat/Omsetn"}
-BOLD_BD_ITEMS = {"Dekningsbidrag"}
+BOLD_BD_ITEMS = {"Dekningsbidrag", "Driftsresultat"}
 COST_BD_ITEMS = {
     "MVA (15 %)",
     "Varekostnad",
@@ -804,8 +829,6 @@ def render_box(
     with st.expander("Kostnadsfordeling"):
         bd_rows = []
         for metric in bd_box:
-            if metric == "Driftsresultat":
-                continue
             sim_val = bd_box[metric]
             a_val = bd_avg[metric]
             is_pct = metric in PCT_BD_ITEMS
@@ -967,11 +990,19 @@ with tab_dashboard:
         with cols[i]:
             abbo_price = prices[label]
             price = subscription_total_prices[label]
+            discount_pct = subscription_discounts_pct[label]
+            discount_kr = subscription_discount_amounts[label]
             n_slots = sub["slots"]
-            st.metric(label, f"{price:,} kr")
-            st.caption(
-                f"Abonnement {abbo_price:,.0f} kr + frakt {shipping_price:,.0f} kr"
-            )
+            st.metric(label, f"{price:,.0f} kr")
+            if discount_pct > 0:
+                st.caption(
+                    f"Abonnement {abbo_price:,.0f} kr + frakt {shipping_price:,.0f} kr "
+                    f"- rabatt {discount_pct:.1f}% ({discount_kr:,.0f} kr)"
+                )
+            else:
+                st.caption(
+                    f"Abonnement {abbo_price:,.0f} kr + frakt {shipping_price:,.0f} kr"
+                )
             st.caption(f"{n_slots} valgfrie produktslots")
 
             # Box-level portions & weight (sum of n_slots independent draws)
@@ -1054,8 +1085,6 @@ with tab_dashboard:
 
             bd_rows = []
             for metric in bd_sim:
-                if metric == "Driftsresultat":
-                    continue
                 sim_val = bd_sim[metric]
                 avg_val = bd_avg[metric]
                 is_pct = metric in PCT_BD_ITEMS
@@ -1148,10 +1177,19 @@ def _render_tab_analyse():
     sub = SUBSCRIPTIONS[sub_label]
     n_slots = sub["slots"]
     price = subscription_total_prices[sub_label]
-    st.caption(
-        f"Pris: abonnement {prices[sub_label]:,.0f} kr + "
-        f"frakt {shipping_price:,.0f} kr = {price:,.0f} kr"
-    )
+    _sub_discount_pct = subscription_discounts_pct[sub_label]
+    _sub_discount_kr = subscription_discount_amounts[sub_label]
+    if _sub_discount_pct > 0:
+        st.caption(
+            f"Pris: abonnement {prices[sub_label]:,.0f} kr + "
+            f"frakt {shipping_price:,.0f} kr - rabatt {_sub_discount_pct:.1f}% "
+            f"({_sub_discount_kr:,.0f} kr) = {price:,.0f} kr"
+        )
+    else:
+        st.caption(
+            f"Pris: abonnement {prices[sub_label]:,.0f} kr + "
+            f"frakt {shipping_price:,.0f} kr = {price:,.0f} kr"
+        )
 
     # ── Slot locking ──────────────────────────────────────────
     st.subheader("Slotlåsing")
@@ -1540,8 +1578,18 @@ def _render_tab_benchmark():
     for _i, (_lbl, _sub_info) in enumerate(SUBSCRIPTIONS.items()):
         _ns = _sub_info["slots"]
         _total = _slot_price * _ns + _DELIVERY_COST
-        _eff_per_slot = _total / _ns
-        _eff_cols[_i].metric(_lbl, f"{_eff_per_slot:,.0f} kr/slot", delta=f"totalt {_total:,.0f} kr")
+        _discount_pct = subscription_discounts_pct[_lbl]
+        _discounted_total = _total * (1 - _discount_pct / 100)
+        _eff_per_slot = _discounted_total / _ns
+        _eff_cols[_i].metric(
+            _lbl,
+            f"{_eff_per_slot:,.0f} kr/slot",
+            delta=f"totalt {_discounted_total:,.0f} kr",
+        )
+        if _discount_pct > 0:
+            _eff_cols[_i].caption(
+                f"Rabatt {_discount_pct:.1f}% ({_total - _discounted_total:,.0f} kr)"
+            )
 
     # Compute Yrja pris/kg dynamically based on slider
     # Effective price per slot = (slot_price * n_slots + delivery) / n_slots
@@ -1649,6 +1697,7 @@ def _render_tab_benchmark():
     )
     _b_sub = SUBSCRIPTIONS[_b_sub_label]
     _b_n_slots = _b_sub["slots"]
+    _b_discount_pct = subscription_discounts_pct[_b_sub_label]
     _b_price = subscription_total_prices[_b_sub_label]
     _B_N_SIMS = 10_000
 
@@ -1693,7 +1742,9 @@ def _render_tab_benchmark():
     _b_res = st.session_state[_b_key]
 
     # Effective Yrja total per box = slot_price * n_slots + delivery
-    _yrja_box_total = _slot_price * _b_n_slots + _DELIVERY_COST
+    _yrja_box_total = (_slot_price * _b_n_slots + _DELIVERY_COST) * (
+        1 - _b_discount_pct / 100
+    )
     _AMOI_DELIVERY = 169.0
 
     # ── Helper: compute box-level kr totals from picks ─────────
@@ -1828,24 +1879,57 @@ def _render_tab_benchmark():
 
     _box_detail_df = pd.DataFrame(_box_rows)
     _products_yrja = _slot_price * _b_n_slots
+    _base_yrja_total = _products_yrja + _DELIVERY_COST
+    _yrja_discount = _base_yrja_total * (_b_discount_pct / 100)
+    _yrja_total = _base_yrja_total - _yrja_discount
     _products_oda = _box_detail_df["ODA (kr)"].sum()
     _products_amoi = _box_detail_df["AMOI (kr)"].sum()
     _tot_kg = _box_detail_df["kg"].sum()
     _n = len(_box_rows)
 
     # Delivery rows + totals
-    _extra = pd.DataFrame([
-        {"Slot": "", "Produktnavn": "Levering", "kg": None,
-         "Yrja (kr)": round(_DELIVERY_COST, 0), "ODA (kr)": None, "AMOI (kr)": round(_AMOI_DELIVERY, 0)},
-        {"Slot": "", "Produktnavn": "TOTALT", "kg": round(_tot_kg, 2),
-         "Yrja (kr)": round(_products_yrja + _DELIVERY_COST, 0),
-         "ODA (kr)": round(_products_oda, 0),
-         "AMOI (kr)": round(_products_amoi + _AMOI_DELIVERY, 0)},
-        {"Slot": "", "Produktnavn": "SNITT per slot", "kg": round(_tot_kg / _n, 2),
-         "Yrja (kr)": round((_products_yrja + _DELIVERY_COST) / _n, 0),
-         "ODA (kr)": round(_products_oda / _n, 0),
-         "AMOI (kr)": round((_products_amoi + _AMOI_DELIVERY) / _n, 0)},
-    ])
+    _extra_rows = [
+        {
+            "Slot": "",
+            "Produktnavn": "Levering",
+            "kg": None,
+            "Yrja (kr)": round(_DELIVERY_COST, 0),
+            "ODA (kr)": None,
+            "AMOI (kr)": round(_AMOI_DELIVERY, 0),
+        }
+    ]
+    if _b_discount_pct > 0:
+        _extra_rows.append(
+            {
+                "Slot": "",
+                "Produktnavn": f"Rabatt ({_b_discount_pct:.1f}%)",
+                "kg": None,
+                "Yrja (kr)": -round(_yrja_discount, 0),
+                "ODA (kr)": None,
+                "AMOI (kr)": None,
+            }
+        )
+    _extra_rows.extend(
+        [
+            {
+                "Slot": "",
+                "Produktnavn": "TOTALT",
+                "kg": round(_tot_kg, 2),
+                "Yrja (kr)": round(_yrja_total, 0),
+                "ODA (kr)": round(_products_oda, 0),
+                "AMOI (kr)": round(_products_amoi + _AMOI_DELIVERY, 0),
+            },
+            {
+                "Slot": "",
+                "Produktnavn": "SNITT per slot",
+                "kg": round(_tot_kg / _n, 2),
+                "Yrja (kr)": round(_yrja_total / _n, 0),
+                "ODA (kr)": round(_products_oda / _n, 0),
+                "AMOI (kr)": round((_products_amoi + _AMOI_DELIVERY) / _n, 0),
+            },
+        ]
+    )
+    _extra = pd.DataFrame(_extra_rows)
     _box_detail_df = pd.concat([_box_detail_df, _extra], ignore_index=True)
     st.dataframe(_box_detail_df, use_container_width=True, hide_index=True)
 
@@ -1969,7 +2053,8 @@ def _render_tab_health():
         lbl: prices[lbl] * _h_price_adj for lbl in SUBSCRIPTIONS
     }
     _h_adj_prices = {
-        lbl: _h_adj_abbo_prices[lbl] + shipping_price
+        lbl: (_h_adj_abbo_prices[lbl] + shipping_price)
+        * (1 - subscription_discounts_pct[lbl] / 100)
         for lbl in SUBSCRIPTIONS
     }
 
